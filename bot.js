@@ -99,15 +99,14 @@ client.on('message', (message) => {
             listSongs.push(new Anime("Ginatama", "E25", "https://www.youtube.com/watch?v=4_mBUQM14I0"));
         }
         voiceChannel.join().then(connection => {
-            let members = voiceChannel.members._array;
-            for (let index = 0; index < members.length; index++) {
-                const element = members[index];
+            let mem = voiceChannel.members.array();
+            for (let index = 0; index < mem.length; index++) {
+                let element = mem[index];
                 mpTable.push(element.id);
                 element.send(":crab:Hi ready to play ?:crab:")
             }
 
         });
-
     }
 
 	if (message.guild === null){        
