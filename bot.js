@@ -1,6 +1,6 @@
 const lewho_TOKEN = 'NTE1NjYwMzQ1MTI2MTU4MzQ3.DtoWGw.V8xlVNyMDL6QohpLvDPJCdAIcwA';
 const mx_TOKEN = 'MzE4Nzc1NDgxNTE0MDY1OTIw.DsecPg.P2ggfh1QZQghQbjDx834n2Z8Plg';
-const TOKEN = lewho_TOKEN;
+const TOKEN = mx_TOKEN;
 const YTKEY = 'AIzaSyByJq7Dq91jNOYGESfWC1hjl84Kg-kzZHI';
 
 const Discord = require('discord.js'); // Require the Discord.js library.
@@ -14,7 +14,7 @@ const Player = require('./model/Player.js');
 
 //var mpTable = ["Lewho", "「Mx」"];
 var mpTable = [];
-var Started = false;
+var started = false;
 var Game;
 
 
@@ -102,13 +102,13 @@ client.on('message', (message) => {
         if (mpTable.includes(message.author.id)) {
             //console.log(message);
             let regex = /(oui|o)|(y*$|yes)/gmi;            
-            if (!Started && message.content.search(regex)>=0) {
-                Game.PlayerReady(message.author.id);
-                Started = Game.areAllPlayersReady();
+            if (!started && message.content.search(regex)>=0) {
+                Game.playerReady(message.author.id);
+                started = Game.areAllPlayersReady();
                 message.author.send("Choisi\n1: Reponse Ouverte\n2: 4 Propositions\n3: 2 Propositions\n");
                 //MpSomeone(message.toString());
                 return;
-            }else if(!Started && !message.content.search(regex)>=0){
+            }else if(!started && !message.content.search(regex)>=0){
                 message.author.send("You must respond [y]es/[o]ui");
                 return;
             }

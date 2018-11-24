@@ -1,87 +1,64 @@
 const Player = require('./Player.js');
 
-class Partie{
+
+class Partie {
     constructor(noRounds) {
         this.noRounds = noRounds;
         this.curRound = 0;
         this.ID = Math.random();
-        this.Players = [];
+        this.players = [];
         this.listSongs = [];
-        this.PlayersReady = false;
-        this.PlayersHaveResponded = false;
+        this.playersReady = false;
+        this.playersHaveResponded = false;
     }
 
     addPlayer(playerID) {
-        this.Players.push(new Player(playerID));
+        this.players.push(new Player(playerID));
     }
 
     areAllPlayersReady(){
-        this.Players.forEach(element => {
-            if (!element.PlayerReady) {
-                return false;
-            }
-        });
-        return true;
+        return this.players.findIndex( (p) => !p.isReady)===-1;
     }
 
-    PlayerReady(playerID){
-        let curPlayer =  this.Players.find(function(element) {
-            return element.ID === playerID;
-          });
+    playerReady(playerID){
+        let curPlayer =  this.players.find((p) => p.ID === playerID);
 
-        curPlayer.PlayerReady = true;
+        curPlayer.isReady = true;
         if (this.areAllPlayersReady()) {
-            this.PlayersReady = true;
+            this.playersReady = true;
         }
     }
 
-    PlayerHaveSelectMode(playerID){
-        let curPlayer =  this.Players.find(function(element) {
-            return element.ID === playerID;
-          });
-
-        curPlayer.PlayerHaveSelectMode = true;
+    playerHaveSelectMode(playerID){
+        let curPlayer =  this.players.find((p) => p.ID === playerID);
+        curPlayer.isModeSelected = true;
     }
     getPlayerSelectModeState(playerID){
-        let curPlayer =  this.Players.find(function(element) {
-            return element.ID === playerID;
-          });
-        return curPlayer.PlayerHaveSelectMode;
+        let curPlayer =  this.players.find((p) => p.ID === playerID);
+        return curPlayer.isModeSelected;
     }
     setPlayerSelectMode(playerID,modeType){
-        let curPlayer =  this.Players.find(function(element) {
-            return element.ID === playerID;
-          });
+        let curPlayer =  this.players.find((p) => p.ID === playerID);
         curPlayer.modeType = modeType;
     }
     getPlayerSelectMode(playerID){
-        let curPlayer =  this.Players.find(function(element) {
-            return element.ID === playerID;
-          });
+        let curPlayer =  this.players.find((p) => p.ID === playerID);
         return curPlayer.modeType;
     }
-    PlayerHaveResponded(playerID){
-        let curPlayer =  this.Players.find(function(element) {
-            return element.ID === playerID;
-          });
-
-        curPlayer.PlayerHaveResponded = true;
+    playerHaveResponded(playerID){
+        let curPlayer =  this.players.find((p) => p.ID === playerID);
+        curPlayer.hasResponded = true;
         if (this.areAllPlayersHaveResponded()) {
-            this.PlayersHaveResponded = true;
+            this.playersHaveResponded = true;
         }
     }
 
     areAllPlayersHaveResponded(){
-        this.Players.forEach(element => {
-            if (!element.PlayerHaveResponded) {
-                return false;
-            }
-        });
-        return true;
+        return this.players.findIndex( (p) => !p.hasResponded)===-1;
     }
 
     reset(){
-        this.Players.forEach(element => {
+        this.players.forEach(element => {
             element.reset();
         });
     }
