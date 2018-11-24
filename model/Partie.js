@@ -1,11 +1,18 @@
 const Player = require('./Player.js');
+const seedrandom = require("seedrandom");
+
 
 
 class Partie {
-    constructor(noRounds) {
+    constructor(noRounds, ID = null) {
         this.noRounds = noRounds;
         this.curRound = 0;
-        this.ID = Math.random();
+        if (ID === null) {
+            this.ID = Math.random() * 1000000;
+        }else{
+            this.ID = ID
+        }
+        var rng = seedrandom(this.ID);
         this.players = [];
         this.listSongs = [];
         this.playersReady = false;

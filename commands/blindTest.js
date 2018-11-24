@@ -80,6 +80,7 @@ exports.replace = (message) => {
 }
 
 /**
+ * @param {import('discord.js').Message} message
  * @param {Partie} Game
  */
 exports.play = (message, mpTable, Game) => {
@@ -107,5 +108,57 @@ exports.play = (message, mpTable, Game) => {
 
     for (let index = 0; index < Game.noRounds; index++) {
         Game.listSongs.push(new Anime("Ginatama", "E25", "https://www.youtube.com/watch?v=4_mBUQM14I0"));
+    }
+}
+
+/**
+* @param {import('discord.js').Message} message 
+* @param {Partie} Game 
+*/
+exports.privateMessage = (message, Game) => {
+    let regex = /(oui|o)|(y*$|yes)/gmi;            
+    if (!started && message.content.search(regex)>=0) {
+        Game.playerReady(message.author.id);
+        started = Game.areAllPlayersReady();
+        message.author.send("Choisi\n1: Reponse Ouverte\n2: 4 Propositions\n3: 2 Propositions\n");
+        //MpSomeone(message.toString());
+        return;
+    }else if(!started && !message.content.search(regex)>=0){
+        message.author.send("You must respond [y]es/[o]ui");
+        return;
+    }
+    if (Game.getPlayerSelectModeState(message.author.id)) {
+
+        /////TODO
+        switch (Game.getPlayerSelectMode(message.author.id)) {
+            case "1":
+                Game
+                break;
+            case "2":
+                message.author.send("1: SNK\n2: tokyo ghoul\n3: gintama\n4: code geass");
+                break;
+            case "3":
+                message.author.send("1: SNK \n2: tokyo ghoul");
+                break;
+        }
+
+    }else{
+        switch (message.content) {
+            case "1":
+                message.author.send("Quel est votre reponse ouverte ?");
+                Game.setPlayerSelectMode(message.author.id, 1);
+                break;
+            case "2":
+                message.author.send("1: SNK\n2: tokyo ghoul\n3: gintama\n4: code geass");
+                Game.setPlayerSelectMode(message.author.id, 2);
+                break;
+            case "3":
+                message.author.send("1: SNK \n2: tokyo ghoul");
+                Game.setPlayerSelectMode(message.author.id, 3);
+                break;
+            default:
+                message.author.send("reponse attendu 1 2 ou 3");
+                break;
+        }
     }
 }
