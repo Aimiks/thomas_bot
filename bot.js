@@ -85,13 +85,12 @@ client.on('message', (message) => {
     }
 });
 
-
 client.on('message', (message) => {
     if (message.author.bot) {
         //console.log(message);
         return;
     }
-    if (message.content.startsWith('>blindtest ')) {
+    if (message.content.startsWith(commands.blindTest.prefix.play)) {
         commands.blindTest.play(message, listSongs, mpTable);
     }
 
@@ -147,7 +146,7 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
 
 client.on('message', (message) => {
     if (!message.author.bot) {
-        if (message.content.startsWith(">bt ")) {
+        if (message.content.startsWith(commands.blindTest.prefix.add)) {
             commands.blindTest.add(Discord, client, message, YTKEY);
         }
     }
