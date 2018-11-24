@@ -3,35 +3,42 @@ const Anime = require('../model/Anime.js');
 const fs = require('fs');
 const Partie = require('../model/Partie.js');
 
+const prefix = {
+    add: '>btadd ',
+    play: '>blindtest ',
+    replace: '>btreplace ',
+    remove: '>btremove '
+}
+exports.prefix = prefix;
 
 let addToJsonFile = function (animes) {
     let animes_obj = {};
-    animes.forEach( a => {
+    animes.forEach(a => {
         // add anime.name property that contains animes property to have an easy browse
-        animes_obj[a.name] =  {...a};
+        animes_obj[a.name] = { ...a };
     });
     let json_list = JSON.stringify(animes_obj);
     fs.exists('animelist.json', bool => {
         if (bool) {
-            fs.readFile('animelist.json', 'utf8', (err,res) => {
-                if(err) throw err;
+            fs.readFile('animelist.json', 'utf8', (err, res) => {
+                if (err) throw err;
 
                 let obj = JSON.parse(res);
-                animes.forEach( anime => {
+                animes.forEach(anime => {
                     // if the list doesn't already have the anime
-                    if(!obj[anime.name]) {
+                    if (!obj[anime.name]) {
                         // add it to the list
-                        obj[anime.name] = {...anime}
+                        obj[anime.name] = { ...anime }
                     }
                 });
                 json_list = JSON.stringify(obj);
                 fs.writeFile('animelist.json', json_list, 'utf8', err => {
-                    if(err) throw err;
+                    if (err) throw err;
                 });
             });
         } else {
             fs.writeFile('animelist.json', json_list, 'utf8', err => {
-                if(err) throw err;
+                if (err) throw err;
             });
         }
     });
@@ -42,14 +49,19 @@ let addToJsonFile = function (animes) {
  * @param {function} callback 
  */
 let unserializeAnimeList = function (callback) {
-    if(typeof callback !== "function") {
+    if (typeof callback !== "function") {
         console.error("[unserializeAnimeList] callback is not a function");
     }
     fs.exists('animelist.json', bool => {
         if (bool) {
-            fs.readFile('animelist.json', 'utf8', (err,res) => {
-                if(err) throw err;
-                callback(JSON.parse(res));
+            fs.readFile('animelist.json', 'utf8', (err, res) => {
+                if (err) throw err;
+                let animes = [];
+                let objs = JSON.parse(res);
+                Object.values(objs).forEach( ({name,type,link}) => {
+                    animes.push(new Anime(name,type,link));
+                });
+                callback(animes);
             });
         } else {
             throw "Animelist does not exist."
@@ -62,11 +74,6 @@ exports.util = {
 };
 
 
-const prefix = {
-    add: '>btadd ',
-    play: '>blindtest '
-}
-exports.prefix = prefix;
 /**
  * @param {import('discord.js').Message} message
  * Args = animes... || links...
@@ -99,23 +106,79 @@ exports.add = (Discord, client, message, YTKEY) => {
             animes.push(new Anime(args[ind].trim(), "osef atm", r.url));
         });
         addToJsonFile(animes);
-       // message.author.send(embed);
+        message.author.send(embed);
     });
 };
 
 /**
  * @param {import('discord.js').Message} message
  */
-exports.replace = (message) => {
-    // replace an anime in the blindTest
-    let args = message.content.split(" ");
-    if (args.length < 4) {
-        //err
+exports.replaceLink = (message) => {
+    // replace an animeLink in the blindTest
+    message.content.substring("")
+    let args = message.content.split(",");
+    if (args.length < 3) {
+        message.channel.send("Nombres d'arguments invalides.\n Ex : >btreplace mirai nikki op1, lien_youtube");
         return;
     }
-    let name = args[1];
-    let index = args[2];
-    let replacement = args[3];
+    let index = args[1];
+    let replacement = args[2];
+
+    fs.exists('animelist.json', bool => {
+        if (bool) {
+            fs.readFile('animelist.json', 'utf8', (err, res) => {
+                if (err) {
+                    message.channel.send("Une erreur est survenue");
+                    throw err;
+                }
+                let obj = JSON.parse(res);
+                obj[index].url = replacement;
+                json_list = JSON.stringify(obj);
+                fs.writeFile('animelist.json', json_list, 'utf8', err => {
+                    if (err) {
+                        message.channel.send("Une erreur est survenue");
+                        throw err;
+                    }
+                });
+            });
+
+        } else {
+            message.channel.send("Aucune anime list n'a encore été créée, impossible de remplacer.");
+        }
+    });
+}
+
+exports.remove = (message) => {
+    let args = message.content.split(" ");
+    if (args.length < 3) {
+        message.channel.send("Nombres d'arguments invalides.\n Ex : >btreplace mirai nikki op1");
+        return;
+    }
+    let index = args[1];
+    let replacement = args[2];
+
+    fs.exists('animelist.json', bool => {
+        if (bool) {
+            fs.readFile('animelist.json', 'utf8', (err, res) => {
+                if (err) {
+                    message.channel.send("Une erreur est survenue");
+                    throw err;
+                }
+                let obj = JSON.parse(res);
+                obj[index].url = replacement;
+                json_list = JSON.stringify(obj);
+                fs.writeFile('animelist.json', json_list, 'utf8', err => {
+                    if (err) {
+                        message.channel.send("Une erreur est survenue");
+                        throw err;
+                    }
+                });
+            });
+
+        } else {
+            message.channel.send("Aucune anime list n'a encore été créée, impossible de remplacer.");
+        }
+    });
 }
 
 /**
@@ -124,7 +187,7 @@ exports.replace = (message) => {
  */
 exports.play = (message, mpTable, Game) => {
     let voiceChannel = message.member.voiceChannel;
-    
+
     try {
         voiceChannel.join().then(connection => {
             let mem = voiceChannel.members.array();
@@ -140,10 +203,11 @@ exports.play = (message, mpTable, Game) => {
 
         });
     }
-    catch(error) {
+    catch (error) {
         message.channel.send("You must be in a voice channel");
     }
-    
+
+
     for (let index = 0; index < Game.noRounds; index++) {
         Game.listSongs.push(new Anime("Ginatama", "E25", "https://www.youtube.com/watch?v=4_mBUQM14I0"));
     }
@@ -154,14 +218,14 @@ exports.play = (message, mpTable, Game) => {
 * @param {Partie} Game 
 */
 exports.privateMessage = (message, Game) => {
-    let regex = /(oui|o)|(y*$|yes)/gmi;            
-    if (!started && message.content.search(regex)>=0) {
+    let regex = /(oui|o)|(y*$|yes)/gmi;
+    if (!started && message.content.search(regex) >= 0) {
         Game.playerReady(message.author.id);
         started = Game.areAllPlayersReady();
         message.author.send("Choisi\n1: Reponse Ouverte\n2: 4 Propositions\n3: 2 Propositions\n");
         //MpSomeone(message.toString());
         return;
-    }else if(!started && !message.content.search(regex)>=0){
+    } else if (!started && !message.content.search(regex) >= 0) {
         message.author.send("You must respond [y]es/[o]ui");
         return;
     }
@@ -180,7 +244,7 @@ exports.privateMessage = (message, Game) => {
                 break;
         }
 
-    }else{
+    } else {
         switch (message.content) {
             case "1":
                 message.author.send("Quel est votre reponse ouverte ?");
