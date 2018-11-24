@@ -1,6 +1,7 @@
 const { YTSearcher } = require('ytsearcher');
 const Anime = require('../model/Anime.js');
 const fs = require('fs');
+const Partie = require('../model/Partie.js');
 
 
 function addToJsonFile(name, animes) {
@@ -62,6 +63,7 @@ exports.add = (Discord, client, message, YTKEY) => {
         message.author.send(embed);
     });
 };
+
 /**
  * @param {import('discord.js').Message} message
  */
@@ -76,11 +78,11 @@ exports.replace = (message) => {
     let index = args[2];
     let replacement = args[3];
 }
+
 /**
- * @param {import('discord.js').Message} message
+ * @param {Partie} Game
  */
-exports.play = (message, listSongs, mpTable) => {
-    let arg = message.content.split(' ')[1];
+exports.play = (message, mpTable, Game) => {
     let voiceChannel = message.member.voiceChannel;
     voiceChannel.join().then(connection => {
         let mem = voiceChannel.members.array();
@@ -90,11 +92,12 @@ exports.play = (message, listSongs, mpTable) => {
             }
             let element = mem[index];
             mpTable.push(element.id);
+            Game.addPlayer(element.id);
             element.send(":crab:Hi ready to play ?:crab:")
         }
 
     });
-    for (let index = 0; index < arg; index++) {
-        listSongs.push(new Anime("Ginatama", "E25", "https://www.youtube.com/watch?v=4_mBUQM14I0"));
+    for (let index = 0; index < Game.noRounds; index++) {
+        Game.listSongs.push(new Anime("Ginatama", "E25", "https://www.youtube.com/watch?v=4_mBUQM14I0"));
     }
 }
