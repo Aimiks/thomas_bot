@@ -92,7 +92,7 @@ client.on('message', (message) => {
         //console.log(message);
         return;
     }
-    if (message.content.startsWith('>blindTest ')) {
+    if (message.content.startsWith('>blindtest ')) {
         let arg = message.content.split(' ')[1];
         let voiceChannel = message.member.voiceChannel;
         for (let index = 0; index < arg; index++) {
@@ -101,6 +101,9 @@ client.on('message', (message) => {
         voiceChannel.join().then(connection => {
             let mem = voiceChannel.members.array();
             for (let index = 0; index < mem.length; index++) {
+                if (mem[index].user.bot) {
+                    continue;
+                }
                 let element = mem[index];
                 mpTable.push(element.id);
                 element.send(":crab:Hi ready to play ?:crab:")
@@ -110,7 +113,7 @@ client.on('message', (message) => {
     }
 
 	if (message.guild === null){        
-        if (mpTable.includes(message.author.username)) {
+        if (mpTable.includes(message.author.id)) {
             //console.log(message);
             if (!Stared) {
                 Stared = true;
