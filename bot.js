@@ -1,6 +1,6 @@
 const lewho_TOKEN = 'NTE1NjYwMzQ1MTI2MTU4MzQ3.DtoWGw.V8xlVNyMDL6QohpLvDPJCdAIcwA';
 const mx_TOKEN = 'MzE4Nzc1NDgxNTE0MDY1OTIw.DsecPg.P2ggfh1QZQghQbjDx834n2Z8Plg';
-const TOKEN = lewho_TOKEN;
+const TOKEN = mx_TOKEN;
 const YTKEY = 'AIzaSyByJq7Dq91jNOYGESfWC1hjl84Kg-kzZHI';
 
 const Discord = require('discord.js'); // Require the Discord.js library.
@@ -176,6 +176,9 @@ client.on('message', (message) => {
     if (!message.author.bot) {
         if (message.content.startsWith(commands.blindTest.prefix.add)) {
             commands.blindTest.add(Discord, client, message, YTKEY);
+        }
+        if(message.content.startsWith(">test")) {
+            commands.blindTest.util.unserializeAnimeList( (res) => console.log(res));
         }
     }
 });

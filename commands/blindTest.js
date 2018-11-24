@@ -4,14 +4,27 @@ const fs = require('fs');
 const Partie = require('../model/Partie.js');
 
 
-function addToJsonFile(name, animes) {
-    let json_list = JSON.stringify({name : { animes: [...animes] }});
+let addToJsonFile = function (animes) {
+    let animes_obj = {};
+    animes.forEach( a => {
+        // add anime.name property that contains animes property to have an easy browse
+        animes_obj[a.name] =  {...a};
+    });
+    let json_list = JSON.stringify(animes_obj);
     fs.exists('animelist.json', bool => {
         if (bool) {
-            fs.readFile('animelist.json', 'utf8', res => {
-                let list = JSON.parse(res);
-                list[name] = { animes: [...animes] };
-                json_list = JSON.stringify(list);
+            fs.readFile('animelist.json', 'utf8', (err,res) => {
+                if(err) throw err;
+
+                let obj = JSON.parse(res);
+                animes.forEach( anime => {
+                    // if the list doesn't already have the anime
+                    if(!obj[anime.name]) {
+                        // add it to the list
+                        obj[anime.name] = {...anime}
+                    }
+                });
+                json_list = JSON.stringify(obj);
                 fs.writeFile('animelist.json', json_list, 'utf8', err => {
                     if(err) throw err;
                 });
@@ -23,6 +36,32 @@ function addToJsonFile(name, animes) {
         }
     });
 }
+
+/**
+ * 
+ * @param {function} callback 
+ */
+let unserializeAnimeList = function (callback) {
+    if(typeof callback !== "function") {
+        console.error("[unserializeAnimeList] callback is not a function");
+    }
+    fs.exists('animelist.json', bool => {
+        if (bool) {
+            fs.readFile('animelist.json', 'utf8', (err,res) => {
+                if(err) throw err;
+                callback(JSON.parse(res));
+            });
+        } else {
+            throw "Animelist does not exist."
+        }
+    });
+}
+
+exports.util = {
+    unserializeAnimeList
+};
+
+
 const prefix = {
     add: '>btadd ',
     play: '>blindtest '
@@ -57,10 +96,10 @@ exports.add = (Discord, client, message, YTKEY) => {
         let animes = [];
         res.forEach((r, ind) => {
             embed.addField(`Musique n°${ind}`, `[${r.title}](${r.url})`);
-            animes.push(new Anime(args[ind], "osef atm", r.url));
+            animes.push(new Anime(args[ind].trim(), "osef atm", r.url));
         });
-        addToJsonFile(args,animes);
-        message.author.send(embed);
+        addToJsonFile(animes);
+       // message.author.send(embed);
     });
 };
 
