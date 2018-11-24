@@ -1,9 +1,21 @@
-const TOKEN = 'MzE4Nzc1NDgxNTE0MDY1OTIw.DsecPg.P2ggfh1QZQghQbjDx834n2Z8Plg';
+//const TOKEN = 'MzE4Nzc1NDgxNTE0MDY1OTIw.DsecPg.P2ggfh1QZQghQbjDx834n2Z8Plg';
+const TOKEN = 'NTE1NjYwMzQ1MTI2MTU4MzQ3.DtoWGw.V8xlVNyMDL6QohpLvDPJCdAIcwA';
 const YTKEY = 'AIzaSyByJq7Dq91jNOYGESfWC1hjl84Kg-kzZHI';
+
+const YouTube = require("discord-youtube-api");
+const youtube = new YouTube("AIzaSyCjEg3aPzc_J42T_bpRrSU0Lh7AnlPrPYs");
+
 const Discord = require('discord.js'); // Require the Discord.js library.
 const ytdl = require('ytdl-core');
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
+
+
+//var mpTable = ["Lewho", "「Mx」"];
+var mpTable = [];
+var listSongs = [];
+var Stared = false;
+
 
 class Bot extends Discord.Client {
     constructor(options) {
@@ -12,7 +24,7 @@ class Bot extends Discord.Client {
         this.ff_music=" https://www.youtube.com/watch?v=3yNrSBO6L60&t=85"
         fs.createReadStream("song.mp3").on("error", () => this.downloadAndPlayMusic(this.ff_music));
     }
-
+    /*
     downloadAndPlayMusic(link) {
         //link.replace(new RegExp('&feature=youtu.be','gi'),"");
         let url = new URL(link);
@@ -31,7 +43,7 @@ class Bot extends Discord.Client {
             });
         let out = fs.createWriteStream("song.mp3");
         let ffstream = command.pipe(out);
-    }
+    }*/
 
     playFF(voiceChannel) {
         const streamOptions = { seek: 0, volume: 1 };
@@ -57,7 +69,7 @@ client.on('ready', function () {
     console.log("Je suis connecté !");
 });
 // Music
-/*
+
 client.on('message', (message) => {
     if (message.content.startsWith('>play ')) {
         let arg = message.content.split(' ')[1];
@@ -75,7 +87,58 @@ client.on('message', (message) => {
         }).catch(err => console.log(err));
     }
 });
-*/
+
+
+client.on('message', (message) => {
+    if (message.author.bot) {
+        //console.log(message);
+        return;
+    }
+    if (message.content.startsWith('>blindTest ')) {
+        let arg = message.content.split(' ')[1];
+        let voiceChannel = message.member.voiceChannel;
+        for (let index = 0; index < arg; index++) {
+            listSongs.push(new Anime("Ginatama", "E25", "https://www.youtube.com/watch?v=4_mBUQM14I0"));
+        }
+        voiceChannel.join().then(connection => {
+            ///FOOOUU LA MERDE
+        });
+
+    }
+
+	if (message.guild === null){        
+        if (mpTable.includes(message.author.username)) {
+            //console.log(message);
+            if (!Stared) {
+                Stared = true;
+                message.author.send("Choisi\n1: Cash\n2: Carré\n3: Duo\n");
+                //MpSomeone(message.toString());
+                return;
+            }
+
+            switch (message.content) {
+                case "1":
+                    message.author.send(" ?");
+                    break;
+                case "2":
+                    message.author.send("1: SNK\n2: tokyo ghoul\n3: gintama\n4: code geass");
+                    break;
+                case "3":
+                    message.author.send("1: SNK \n2: tokyo ghoul");
+                    break;
+                default:
+                    message.author.send("reponse attendu 1 2 ou 3");
+                    break;
+            }
+        }else{
+            console.log(message.author.username);
+            
+        }
+
+	}
+});
+
+
 //
 client.on('voiceStateUpdate', (oldMember, newMember) => {
     let newUserChannel = newMember.voiceChannel
@@ -84,7 +147,7 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
     if (oldUserChannel === undefined && newUserChannel !== undefined) {
         // User join a voice channel
 
-        if (!newMember.user.bot && newMember.user.username === "Unknow") {
+        if (!newMember.user.bot && newMember.user.username === "kaaris") {
             client.playFF(newUserChannel);
         }
 
@@ -95,3 +158,17 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
 
     }
 });
+
+function MpSomeone(id) {
+    let someone = client.fetchUser(id);
+
+    someone.then(x => x.send("yes"));
+}
+
+class Anime{
+    constructor(name, type, link) {
+        this.name = name;
+        this.type = type;
+        this.link = link;
+    }
+}
