@@ -1,6 +1,7 @@
 # TODO
-* dire bjr à kaaris
-* dire bj à **vald**
-## FIXES
-* rien mdr
-    * rien lol
+* lecture du fichier anime
+* ecriture du fichier anime
+* Systeme de reponse
+* scoring (avec multiplicateur)
+* enregistrment de la liste random pour replay
+
