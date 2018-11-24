@@ -1,14 +1,13 @@
-//const TOKEN = 'MzE4Nzc1NDgxNTE0MDY1OTIw.DsecPg.P2ggfh1QZQghQbjDx834n2Z8Plg';
-const TOKEN = 'NTE1NjYwMzQ1MTI2MTU4MzQ3.DtoWGw.V8xlVNyMDL6QohpLvDPJCdAIcwA';
+const lewho_TOKEN = 'NTE1NjYwMzQ1MTI2MTU4MzQ3.DtoWGw.V8xlVNyMDL6QohpLvDPJCdAIcwA';
+const mx_TOKEN = 'MzE4Nzc1NDgxNTE0MDY1OTIw.DsecPg.P2ggfh1QZQghQbjDx834n2Z8Plg';
+const TOKEN = lewho_TOKEN;
 const YTKEY = 'AIzaSyByJq7Dq91jNOYGESfWC1hjl84Kg-kzZHI';
-
-const YouTube = require("discord-youtube-api");
-const youtube = new YouTube("AIzaSyCjEg3aPzc_J42T_bpRrSU0Lh7AnlPrPYs");
 
 const Discord = require('discord.js'); // Require the Discord.js library.
 const ytdl = require('ytdl-core');
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
+const commands = require("./commands");
 
 
 //var mpTable = ["Lewho", "「Mx」"];
@@ -21,7 +20,7 @@ class Bot extends Discord.Client {
     constructor(options) {
         super(options);
         this.music = require("discord.js-musicbot-addon");
-        this.ff_music=" https://www.youtube.com/watch?v=3yNrSBO6L60&t=85"
+        this.ff_music = " https://www.youtube.com/watch?v=3yNrSBO6L60&t=85"
         fs.createReadStream("song.mp3").on("error", () => this.downloadAndPlayMusic(this.ff_music));
     }
     /*
@@ -31,7 +30,6 @@ class Bot extends Discord.Client {
         let time = url.searchParams.get("t");
         if (!time) { time = 0; }
         console.log(time);
-        const streamOptions = { seek: 0, volume: 1 };
         let options = {
             filter: "audioonly"
         };
@@ -157,11 +155,16 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
             client.playFF(newUserChannel);
         }
 
-
     } else if (newUserChannel === undefined) {
-
         // User leaves a voice channel
+    }
+});
 
+client.on('message', (message) => {
+    if (!message.author.bot) {
+        if (message.content.startsWith(">bt ")) {
+            commands.blindTest(Discord, client, message, YTKEY);
+        }
     }
 });
 
