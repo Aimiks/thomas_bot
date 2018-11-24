@@ -4,12 +4,13 @@ const Discord = require('discord.js'); // Require the Discord.js library.
 const ytdl = require('ytdl-core');
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
+const commands = require("./commands");
 
 class Bot extends Discord.Client {
     constructor(options) {
         super(options);
         this.music = require("discord.js-musicbot-addon");
-        this.ff_music=" https://www.youtube.com/watch?v=3yNrSBO6L60&t=85"
+        this.ff_music = " https://www.youtube.com/watch?v=3yNrSBO6L60&t=85"
         fs.createReadStream("song.mp3").on("error", () => this.downloadAndPlayMusic(this.ff_music));
     }
 
@@ -19,7 +20,6 @@ class Bot extends Discord.Client {
         let time = url.searchParams.get("t");
         if (!time) { time = 0; }
         console.log(time);
-        const streamOptions = { seek: 0, volume: 1 };
         let options = {
             filter: "audioonly"
         };
@@ -83,15 +83,19 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
 
     if (oldUserChannel === undefined && newUserChannel !== undefined) {
         // User join a voice channel
-
         if (!newMember.user.bot && newMember.user.username === "Unknow") {
             client.playFF(newUserChannel);
         }
 
-
     } else if (newUserChannel === undefined) {
-
         // User leaves a voice channel
+    }
+});
 
+client.on('message', (message) => {
+    if (!message.author.bot) {
+        if (message.content.startsWith(">bt ")) {
+            commands.blindTest(Discord, client, message, YTKEY);
+        }
     }
 });
