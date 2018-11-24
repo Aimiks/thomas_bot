@@ -92,23 +92,7 @@ client.on('message', (message) => {
         return;
     }
     if (message.content.startsWith('>blindtest ')) {
-        let arg = message.content.split(' ')[1];
-        let voiceChannel = message.member.voiceChannel;
-        for (let index = 0; index < arg; index++) {
-            listSongs.push(new Anime("Ginatama", "E25", "https://www.youtube.com/watch?v=4_mBUQM14I0"));
-        }
-        voiceChannel.join().then(connection => {
-            let mem = voiceChannel.members.array();
-            for (let index = 0; index < mem.length; index++) {
-                if (mem[index].user.bot) {
-                    continue;
-                }
-                let element = mem[index];
-                mpTable.push(element.id);
-                element.send(":crab:Hi ready to play ?:crab:")
-            }
-
-        });
+        commands.blindTest.play(message, listSongs, mpTable);
     }
 
 	if (message.guild === null){        
@@ -164,7 +148,7 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
 client.on('message', (message) => {
     if (!message.author.bot) {
         if (message.content.startsWith(">bt ")) {
-            commands.blindTest(Discord, client, message, YTKEY);
+            commands.blindTest.add(Discord, client, message, YTKEY);
         }
     }
 });
@@ -173,12 +157,4 @@ function MpSomeone(id) {
     let someone = client.fetchUser(id);
 
     someone.then(x => x.send("yes"));
-}
-
-class Anime{
-    constructor(name, type, link) {
-        this.name = name;
-        this.type = type;
-        this.link = link;
-    }
 }

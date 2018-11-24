@@ -1,4 +1,4 @@
-const {blindTest} = require("./blindTest");
+const blindTest = require("./blindTest");
 
 module.exports = {
     blindTest

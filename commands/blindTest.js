@@ -1,5 +1,8 @@
 const { YTSearcher } = require('ytsearcher');
-exports.blindTest = (Discord, client, message, YTKEY) => {
+const Anime = require('../model/Anime.js');
+
+
+exports.add = (Discord, client, message, YTKEY) => {
     const searcher = new YTSearcher(YTKEY);
     let bt_queue;
     let args = message.content.split(",");
@@ -23,3 +26,23 @@ exports.blindTest = (Discord, client, message, YTKEY) => {
         message.author.send(embed);
     });
 };
+
+exports.play = (message, listSongs, mpTable) => {
+    let arg = message.content.split(' ')[1];
+    let voiceChannel = message.member.voiceChannel;
+    voiceChannel.join().then(connection => {
+        let mem = voiceChannel.members.array();
+        for (let index = 0; index < mem.length; index++) {
+            if (mem[index].user.bot) {
+                continue;
+            }
+            let element = mem[index];
+            mpTable.push(element.id);
+            element.send(":crab:Hi ready to play ?:crab:")
+        }
+
+    });
+    for (let index = 0; index < arg; index++) {
+        listSongs.push(new Anime("Ginatama", "E25", "https://www.youtube.com/watch?v=4_mBUQM14I0"));
+    }
+}
