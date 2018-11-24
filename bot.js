@@ -1,6 +1,6 @@
 const lewho_TOKEN = 'NTE1NjYwMzQ1MTI2MTU4MzQ3.DtoWGw.V8xlVNyMDL6QohpLvDPJCdAIcwA';
 const mx_TOKEN = 'MzE4Nzc1NDgxNTE0MDY1OTIw.DsecPg.P2ggfh1QZQghQbjDx834n2Z8Plg';
-const TOKEN = mx_TOKEN;
+const TOKEN = lewho_TOKEN;
 const YTKEY = 'AIzaSyByJq7Dq91jNOYGESfWC1hjl84Kg-kzZHI';
 
 const Discord = require('discord.js'); // Require the Discord.js library.
@@ -8,12 +8,14 @@ const ytdl = require('ytdl-core');
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
 const commands = require("./commands");
+const Partie = require('./model/Partie.js');
+const Player = require('./model/Player.js');
 
 
 //var mpTable = ["Lewho", "「Mx」"];
 var mpTable = [];
-var listSongs = [];
-var Stared = false;
+var Started = false;
+var Game;
 
 
 class Bot extends Discord.Client {
@@ -92,32 +94,58 @@ client.on('message', (message) => {
         return;
     }
     if (message.content.startsWith('>blindtest ')) {
-        commands.blindTest.play(message, listSongs, mpTable);
+        let arg = message.content.split(' ')[1];
+        Game = new Partie(arg);
+        commands.blindTest.play(message, mpTable, Game);
     }
 
 	if (message.guild === null){        
         if (mpTable.includes(message.author.id)) {
             //console.log(message);
-            if (!Stared) {
-                Stared = true;
-                message.author.send("Choisi\n1: Cash\n2: Carré\n3: Duo\n");
+            let regex = /(oui|o)|(y*$|yes)/gmi;            
+            if (!Started && message.content.search(regex)>=0) {
+                Game.PlayerReady(message.author.id);
+                Started = Game.areAllPlayersReady();
+                message.author.send("Choisi\n1: Reponse Ouverte\n2: 4 Propositions\n3: 2 Propositions\n");
                 //MpSomeone(message.toString());
                 return;
+            }else if(!Started && !message.content.search(regex)>=0){
+                message.author.send("You must respond [y]es/[o]ui");
+                return;
             }
+            if (Game.getPlayerSelectModeState(message.author.id)) {
 
-            switch (message.content) {
-                case "1":
-                    message.author.send(" ?");
-                    break;
-                case "2":
-                    message.author.send("1: SNK\n2: tokyo ghoul\n3: gintama\n4: code geass");
-                    break;
-                case "3":
-                    message.author.send("1: SNK \n2: tokyo ghoul");
-                    break;
-                default:
-                    message.author.send("reponse attendu 1 2 ou 3");
-                    break;
+                /////TODO
+                switch (Game.getPlayerSelectMode(message.author.id)) {
+                    case "1":
+                        Game
+                        break;
+                    case "2":
+                        message.author.send("1: SNK\n2: tokyo ghoul\n3: gintama\n4: code geass");
+                        break;
+                    case "3":
+                        message.author.send("1: SNK \n2: tokyo ghoul");
+                        break;
+                }
+
+            }else{
+                switch (message.content) {
+                    case "1":
+                        message.author.send("Quel est votre reponse ouverte ?");
+                        Game.setPlayerSelectMode(message.author.id, 1);
+                        break;
+                    case "2":
+                        message.author.send("1: SNK\n2: tokyo ghoul\n3: gintama\n4: code geass");
+                        Game.setPlayerSelectMode(message.author.id, 2);
+                        break;
+                    case "3":
+                        message.author.send("1: SNK \n2: tokyo ghoul");
+                        Game.setPlayerSelectMode(message.author.id, 3);
+                        break;
+                    default:
+                        message.author.send("reponse attendu 1 2 ou 3");
+                        break;
+                }
             }
         }else{
             console.log(message.author.username);
