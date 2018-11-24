@@ -1,6 +1,6 @@
 const lewho_TOKEN = 'NTE1NjYwMzQ1MTI2MTU4MzQ3.DtoWGw.V8xlVNyMDL6QohpLvDPJCdAIcwA';
 const mx_TOKEN = 'MzE4Nzc1NDgxNTE0MDY1OTIw.DsecPg.P2ggfh1QZQghQbjDx834n2Z8Plg';
-const TOKEN = mx_TOKEN;
+const TOKEN = lewho_TOKEN;
 const YTKEY = 'AIzaSyByJq7Dq91jNOYGESfWC1hjl84Kg-kzZHI';
 
 const Discord = require('discord.js'); // Require the Discord.js library.

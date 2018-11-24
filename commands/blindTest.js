@@ -84,19 +84,27 @@ exports.replace = (message) => {
  */
 exports.play = (message, mpTable, Game) => {
     let voiceChannel = message.member.voiceChannel;
-    voiceChannel.join().then(connection => {
-        let mem = voiceChannel.members.array();
-        for (let index = 0; index < mem.length; index++) {
-            if (mem[index].user.bot) {
-                continue;
+    
+    try {
+        voiceChannel.join().then(connection => {
+            let mem = voiceChannel.members.array();
+            for (let index = 0; index < mem.length; index++) {
+                if (mem[index].user.bot) {
+                    continue;
+                }
+                let element = mem[index];
+                mpTable.push(element.id);
+                Game.addPlayer(element.id);
+                element.send(":crab:Hi ready to play ?:crab:")
             }
-            let element = mem[index];
-            mpTable.push(element.id);
-            Game.addPlayer(element.id);
-            element.send(":crab:Hi ready to play ?:crab:")
-        }
 
-    });
+        });
+    }
+    catch(error) {
+        message.channel.send("You must be in a voice channel");
+    }
+    
+
     for (let index = 0; index < Game.noRounds; index++) {
         Game.listSongs.push(new Anime("Ginatama", "E25", "https://www.youtube.com/watch?v=4_mBUQM14I0"));
     }
