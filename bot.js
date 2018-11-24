@@ -1,6 +1,6 @@
 const lewho_TOKEN = 'NTE1NjYwMzQ1MTI2MTU4MzQ3.DtoWGw.V8xlVNyMDL6QohpLvDPJCdAIcwA';
 const mx_TOKEN = 'MzE4Nzc1NDgxNTE0MDY1OTIw.DsecPg.P2ggfh1QZQghQbjDx834n2Z8Plg';
-const TOKEN = mx_TOKEN;
+const TOKEN = lewho_TOKEN;
 const YTKEY = 'AIzaSyByJq7Dq91jNOYGESfWC1hjl84Kg-kzZHI';
 
 const Discord = require('discord.js'); // Require the Discord.js library.
@@ -11,6 +11,7 @@ const commands = require("./commands");
 const Partie = require('./model/Partie.js');
 const Player = require('./model/Player.js');
 const Bot = require('./model/Bot.js');
+const seedrandom = require("seedrandom");
 
 
 
@@ -18,6 +19,7 @@ const Bot = require('./model/Bot.js');
 var mpTable = [];
 var started = false;
 var Game;
+Math.seedrandom(27);
 
 
 const client = new Bot();
@@ -66,10 +68,7 @@ client.on('message', (message) => {
 	if (message.guild === null){        
         if (mpTable.includes(message.author.id)) {
             commands.blindTest.privateMessage(message,Game)
-        }else{
-            console.log(message.author.username);
         }
-
 	}
 });
 
@@ -100,4 +99,14 @@ client.on('message', (message) => {
             commands.blindTest.util.unserializeAnimeList( (res) => console.log(res));
         }
     }
+});
+
+client.on('message', (message) => {
+    if (message.author.bot) {
+        return;
+    }
+    if (message.guild === null && message.content.startsWith(">roll")) {
+        //seedrandom("27");
+        message.author.send(Math.random());
+    }    
 });

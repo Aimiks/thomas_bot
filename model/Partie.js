@@ -12,7 +12,7 @@ class Partie {
         }else{
             this.ID = ID
         }
-        var rng = seedrandom(this.ID);
+        var rng = Math.seedrandom(this.ID);
         this.players = [];
         this.listSongs = [];
         this.playersReady = false;

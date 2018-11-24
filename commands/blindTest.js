@@ -144,7 +144,6 @@ exports.play = (message, mpTable, Game) => {
         message.channel.send("You must be in a voice channel");
     }
     
-
     for (let index = 0; index < Game.noRounds; index++) {
         Game.listSongs.push(new Anime("Ginatama", "E25", "https://www.youtube.com/watch?v=4_mBUQM14I0"));
     }
