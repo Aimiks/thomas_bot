@@ -101,7 +101,13 @@ client.on('message', (message) => {
             listSongs.push(new Anime("Ginatama", "E25", "https://www.youtube.com/watch?v=4_mBUQM14I0"));
         }
         voiceChannel.join().then(connection => {
-            ///FOOOUU LA MERDE
+            let members = voiceChannel.members._array;
+            for (let index = 0; index < members.length; index++) {
+                const element = members[index];
+                mpTable.push(element.id);
+                element.send(":crab:Hi ready to play ?:crab:")
+            }
+
         });
 
     }
