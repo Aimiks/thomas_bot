@@ -1,6 +1,6 @@
 const lewho_TOKEN = 'NTE1NjYwMzQ1MTI2MTU4MzQ3.DtoWGw.V8xlVNyMDL6QohpLvDPJCdAIcwA';
 const mx_TOKEN = 'MzE4Nzc1NDgxNTE0MDY1OTIw.DsecPg.P2ggfh1QZQghQbjDx834n2Z8Plg';
-const TOKEN = lewho_TOKEN;
+const TOKEN = mx_TOKEN;
 const YTKEY = 'AIzaSyByJq7Dq91jNOYGESfWC1hjl84Kg-kzZHI';
 
 const Discord = require('discord.js'); // Require the Discord.js library.
@@ -21,11 +21,10 @@ class Bot extends Discord.Client {
         super(options);
         this.music = require("discord.js-musicbot-addon");
         this.ff_music = " https://www.youtube.com/watch?v=3yNrSBO6L60&t=85"
-        fs.createReadStream("song.mp3").on("error", () => this.downloadAndPlayMusic(this.ff_music));
+        fs.createReadStream("song.mp3").on("error", () => this.downloadMusic(this.ff_music, 9, "song"));
     }
-    /*
-    downloadAndPlayMusic(link) {
-        //link.replace(new RegExp('&feature=youtu.be','gi'),"");
+    
+    downloadMusic(link, duration, outputname) {
         let url = new URL(link);
         let time = url.searchParams.get("t");
         if (!time) { time = 0; }
@@ -33,15 +32,15 @@ class Bot extends Discord.Client {
         let options = {
             filter: "audioonly"
         };
-        let command = ffmpeg().input(ytdl(link, options)).format('mp3').setStartTime(time).duration(9)
+        let command = ffmpeg().input(ytdl(link, options)).format('mp3').setStartTime(time).duration(duration)
             .on('error', (err) => {
                 console.log(err);
             }).on('end', () => {
                 console.log('Processing finished !');
             });
-        let out = fs.createWriteStream("song.mp3");
+        let out = fs.createWriteStream(outputname+".mp3");
         let ffstream = command.pipe(out);
-    }*/
+    }
 
     playFF(voiceChannel) {
         const streamOptions = { seek: 0, volume: 1 };
