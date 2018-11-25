@@ -15,8 +15,6 @@ const Bot = require('./model/Bot.js');
 
 
 //var mpTable = ["Lewho", "「Mx」"];
-var mpTable = [];
-var started = false;
 var Game;
 
 
