@@ -11,7 +11,6 @@ const commands = require("./commands");
 const Partie = require('./model/Partie.js');
 const Player = require('./model/Player.js');
 const Bot = require('./model/Bot.js');
-const seedrandom = require("seedrandom");
 
 
 
@@ -19,7 +18,6 @@ const seedrandom = require("seedrandom");
 var mpTable = [];
 var started = false;
 var Game;
-Math.seedrandom(27);
 
 
 const client = new Bot();
@@ -63,11 +61,13 @@ client.on('message', (message) => {
         let seed = message.content.split(' ')[2];
         Game = new Partie(noRounds, seed);
         commands.blindTest.play(message, mpTable, Game);
+        console.log(mpTable);
+        
     }
 
 	if (message.guild === null){        
-        if (mpTable.includes(message.author.id)) {
-            commands.blindTest.privateMessage(message,Game)
+        if (mpTable.includes(message.author)) {
+            commands.blindTest.privateMessage(message,Game,started,mpTable)
         }
 	}
 });
@@ -110,3 +110,4 @@ client.on('message', (message) => {
         message.author.send(Math.random());
     }    
 });
+

@@ -196,7 +196,7 @@ exports.play = (message, mpTable, Game) => {
                     continue;
                 }
                 let element = mem[index];
-                mpTable.push(element.id);
+                mpTable.push(element.user);
                 Game.addPlayer(element.id);
                 element.send(":crab:Hi ready to play ?:crab:")
             }
@@ -207,55 +207,101 @@ exports.play = (message, mpTable, Game) => {
         message.channel.send("You must be in a voice channel");
     }
 
-
-    for (let index = 0; index < Game.noRounds; index++) {
-        Game.listSongs.push(new Anime("Ginatama", "E25", "https://www.youtube.com/watch?v=4_mBUQM14I0"));
-    }
+    unserializeAnimeList((res) => {
+        for (let i = 0; i < res.length; i++) {
+            Game.listAllSongs.push(res[i]);
+        }
+        for (let index = 0; index < Game.noRounds; index++) {           
+            let rng = Math.round(Math.random() * res.length);
+            console.log(rng);
+            Game.listSongs.push(res[rng]);     
+        }
+    }); 
 }
 
 /**
 * @param {import('discord.js').Message} message 
 * @param {Partie} Game 
 */
-exports.privateMessage = (message, Game) => {
+exports.privateMessage = (message, Game,started,mpTable) => {
     let regex = /(oui|o)|(y*$|yes)/gmi;
-    if (!started && message.content.search(regex) >= 0) {
-        Game.playerReady(message.author.id);
-        started = Game.areAllPlayersReady();
-        message.author.send("Choisi\n1: Reponse Ouverte\n2: 4 Propositions\n3: 2 Propositions\n");
-        //MpSomeone(message.toString());
-        return;
-    } else if (!started && !message.content.search(regex) >= 0) {
-        message.author.send("You must respond [y]es/[o]ui");
-        return;
-    }
-    if (Game.getPlayerSelectModeState(message.author.id)) {
+    if (!Game.areAllPlayersReady()) {
+        if (message.content.search(regex) >= 0) {
+            Game.playerReady(message.author.id);
 
-        /////TODO
+            if (Game.areAllPlayersReady()) {
+                mpTable.forEach(e => {
+                    e.send("La Prochaine Manche va commencer");
+                    e.send("Choisi\n1: Reponse Ouverte\n2: 4 Propositions\n3: 2 Propositions\n");
+                });
+            }
+            return;
+        } else if (!started && !message.content.search(regex) >= 0) {
+            message.author.send("You must respond [y]es/[o]ui");
+            return;
+        }
+    }
+    let t = 8;
+    if (Game.getPlayerSelectModeState(message.author.id)) {        
         switch (Game.getPlayerSelectMode(message.author.id)) {
-            case "1":
-                Game
+            case 1:
+            Game.playerHaveResponded(message.author.id);
+                ///formule : ( 1/t*12 ) * 5pts
+                console.log(message.content + " et " + Game.listSongs[Game.curRound].name);
+                
+                if (Game.listSongs[Game.curRound].name === message.content) {
+                    console.log("Player " + message.author.username+ " find the response");
+                    Game.playerAddScore( message.author.id ,( 1/t*12 ) * 5);
+                }
                 break;
-            case "2":
-                message.author.send("1: SNK\n2: tokyo ghoul\n3: gintama\n4: code geass");
+            case 2:
+            Game.playerHaveResponded(message.author.id);
+                ///formule : (1/t*8) * 3 pts
+                if (message.content === Game.carreSol) {
+                    console.log("Player " + message.author.username+ " find the response");
+                    Game.playerAddScore( message.author.id ,(1/t*8) * 3);
+                }
                 break;
-            case "3":
-                message.author.send("1: SNK \n2: tokyo ghoul");
+            case 3:
+            Game.playerHaveResponded(message.author.id);
+                ///Formule : 1/t*2+1
+                if (message.content === Game.duoSol) {
+                    console.log("Player " + message.author.username+ " find the response");
+                    Game.playerAddScore( message.author.id ,1/t*2+1);
+                }
                 break;
         }
 
+        message.author.send("Le bonne reponse etait " + Game.listSongs[Game.curRound].name + " " + Game.listSongs[Game.curRound].link);
+
+        if (Game.playersHaveResponded) {
+            Game.reset();
+            Game.curRound++;
+            mpTable.forEach(e => {
+                e.send("La Prochaine Manche va commencer");
+                e.send("Choisi\n1: Reponse Ouverte\n2: 4 Propositions\n3: 2 Propositions\n");
+            });
+        }else{
+            message.author.send("En attante des autre joueurs.... ");
+        }
+        
+
     } else {
+
         switch (message.content) {
             case "1":
                 message.author.send("Quel est votre reponse ouverte ?");
                 Game.setPlayerSelectMode(message.author.id, 1);
                 break;
             case "2":
-                message.author.send("1: SNK\n2: tokyo ghoul\n3: gintama\n4: code geass");
+            let temptab1 = Game.getCarre();
+
+                message.author.send("1: "+temptab1[0]+"\n2: "+temptab1[1]+"\n3: "+temptab1[2]+"\n4: "+temptab1[3]);
                 Game.setPlayerSelectMode(message.author.id, 2);
                 break;
             case "3":
-                message.author.send("1: SNK \n2: tokyo ghoul");
+            let temptab2 = Game.getDuo();            
+                message.author.send("1: "+temptab2[0]+"\n2: "+temptab2[1]);
                 Game.setPlayerSelectMode(message.author.id, 3);
                 break;
             default:
