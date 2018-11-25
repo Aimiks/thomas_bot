@@ -1,22 +1,15 @@
 const lewho_TOKEN = 'NTE1NjYwMzQ1MTI2MTU4MzQ3.DtoWGw.V8xlVNyMDL6QohpLvDPJCdAIcwA';
 const mx_TOKEN = 'MzE4Nzc1NDgxNTE0MDY1OTIw.DsecPg.P2ggfh1QZQghQbjDx834n2Z8Plg';
-const TOKEN = lewho_TOKEN;
+const TOKEN = mx_TOKEN;
 const YTKEY = 'AIzaSyByJq7Dq91jNOYGESfWC1hjl84Kg-kzZHI';
 
 const Discord = require('discord.js'); // Require the Discord.js library.
 const ytdl = require('ytdl-core');
-const ffmpeg = require('fluent-ffmpeg');
-const fs = require('fs');
 const commands = require("./commands");
 const Partie = require('./model/Partie.js');
-const Player = require('./model/Player.js');
 const Bot = require('./model/Bot.js');
 
-var ytsearch = require('youtube-search');
-var opts = {
-    maxResults: 1,
-    key: YTKEY
-  };
+
 
 //var mpTable = ["Lewho", "「Mx」"];
 var Game = null;
@@ -132,18 +125,6 @@ client.on('message', (message) => {
     if (message.guild === null && message.content.startsWith(">roll")) {
         //seedrandom("27");
         message.author.send(Math.random());
-    }
-
-
-    if (message.guild === null && message.content.startsWith(">search ")) {
-        let arg = message.content.substr(8);
-        console.log(message.content);
-        console.log(arg);
-        
-        ytsearch(arg, opts, function(err, results) {
-            if(err) return console.log(err);            
-            message.author.send(results[0].link);
-          });    
     }
 });
 

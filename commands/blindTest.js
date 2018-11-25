@@ -1,7 +1,8 @@
-const { YTSearcher } = require('ytsearcher');
 const Anime = require('../model/Anime.js');
 const fs = require('fs');
 const Partie = require('../model/Partie.js');
+const ytsearch = require('youtube-search');
+
 
 const prefix = {
     add: '>btadd ',
@@ -43,20 +44,19 @@ let addToJsonFile = function (animes, callback = null) {
                 json_list = JSON.stringify(obj);
                 fs.writeFile('animelist.json', json_list, 'utf8', err => {
                     if (err) throw err;
-                    if (callback) callback(already_have);
+                    if (callback) callback({already_have, size: Object.keys(obj).length});
                 });
             });
         } else {
             fs.writeFile('animelist.json', json_list, 'utf8', err => {
                 if (err) throw err;
-                if (callback) callback(already_have);
+                if (callback) callback({already_have, size: animes.length});
             });
         }
     });
 }
 
 /**
- * 
  * @param {function} callback 
  */
 let unserializeAnimeList = function (callback) {
@@ -87,11 +87,10 @@ exports.util = {
 
 /**
  * @param {import('discord.js').Message} message
+ * @param {import('discord.js').Client} client
  * Args = animes... || links...
  */
 exports.add = (Discord, client, message, YTKEY) => {
-
-    const searcher = new YTSearcher(YTKEY);
     let bt_queue;
     let args = message.content.split(",");
     // regex to find type
@@ -116,37 +115,41 @@ exports.add = (Discord, client, message, YTKEY) => {
         types.push(matches[0]);
         names.push(arg.replace(regex,'').trim());
     });
-
+    let opts = {
+        maxResults: 1,
+        key: YTKEY
+    };
     // create an array of promise from the yt searcher
-    bt_queue = args.map((arg) => searcher.search(arg));
+    bt_queue = args.map((arg) => ytsearch(arg, opts));
     // when all promises are done
     Promise.all(bt_queue).then((res) => {
         //send an embed message in DM to the user
         let opt = {
             title: "Liste des musiques ajoutées",
             description: `En cas d'erreur sur le lien utiliser la commande ${prefix.replace}`,
-            color: client.resolver.resolveColor([226, 186, 99])
+            color: client.resolver.resolveColor([226, 186, 99]),
+            author: { name: message.author.username, icon_url: message.author.avatarURL}
         };
-        res = res.map(r => r.first);
-        console.log(res[0]);
+        res = res.map(r => r.results[0]);
         let animes = [];
         res.forEach((r, ind) => {
-            animes.push(new Anime(names[ind], types[ind], r.url));
+            animes.push(new Anime(names[ind], types[ind], r.link));
         });
 
         //callback for the addToJsonFile
-        let callback = (already_have) => {
+        let callback = ({already_have, size}) => {
             let warning ="";
+            let embed = new Discord.RichEmbed(opt);
+            let state_msg = "";
             if (already_have.length > 0) {
                 res = res.filter((a, ind) => !already_have.includes(names[ind] + " " + types[ind]));
 
                 warning = `\n:warning: Certains animes n'ont pas été ajoutés car ils existent déjà dans la liste : ${already_have.join(', ')}.`;
             }
-            let embed = new Discord.RichEmbed(opt);
             res.forEach((r, ind) => {
-                embed.addField(`${args[ind]}`, `[${r.title}](${r.url})`);
+                embed.addField(`${args[ind]}`, `[${r.title}](${r.link})`);
             });
-            let state_msg = "";
+            embed.setFooter("Nombres d'animes dans la liste : " + size);
             if(res.length===0) {
                 state_msg = ":x: Aucun animes n'a été ajoutés.";
             } else {
@@ -397,7 +400,7 @@ exports.privateMessage = (message, Game) => {
                 Game.mpTable = [];
 
                 mptabtemp.forEach(e => {
-                    e.send("Le Blind test est fini le Gagnant est " + nameWinner + " avec " + scoreWinner +" de score.:crab::ok_woman:");
+                    e.send(`:headphones: Le blind test est finit !\n:first_place: Le gagnant est __${nameWinner}__ avec **${scoreWinner.toFixed(2)}** de score. :crab: :ok_woman:`);
                 });
 
                 return;
