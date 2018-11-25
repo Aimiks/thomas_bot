@@ -255,7 +255,7 @@ exports.remove = (message) => {
  * @param {import('discord.js').Message} message
  * @param {Partie} Game
  */
-exports.play = (message, mpTable, Game) => {
+exports.play = (message, Game) => {
     let voiceChannel = message.member.voiceChannel;
 
     try {
@@ -266,7 +266,7 @@ exports.play = (message, mpTable, Game) => {
                     continue;
                 }
                 let element = mem[index];
-                mpTable.push(element.user);
+                Game.mpTable.push(element.user);
                 Game.addPlayer(element.id,element.user.username);
                 element.send(":crab:Hi ready to play ?:crab:")
             }
@@ -294,8 +294,8 @@ exports.play = (message, mpTable, Game) => {
  * @param {String[]} mpTable 
  * @param {Partie} Game 
  */
-function startNewRound(mpTable, Game) {
-    mpTable.forEach(e => {
+function startNewRound(Game) {
+    Game.mpTable.forEach(e => {
         e.send("La Prochaine Manche va commencer");
         e.send("Choisi\n1: Reponse Ouverte\n2: 4 Propositions\n3: 2 Propositions\n");
     });
@@ -310,7 +310,8 @@ function startNewRound(mpTable, Game) {
 * @param {Partie} Game 
 * @param {import('discord.js').User[]} mpTable
 */
-exports.privateMessage = (message, Game,started,mpTable) => {
+exports.privateMessage = (message, Game) => {
+    let {started} = Game;
     if (message.author.bot) {
         return;
     }
@@ -320,7 +321,7 @@ exports.privateMessage = (message, Game,started,mpTable) => {
             Game.playerReady(message.author.id);
 
             if (Game.areAllPlayersReady()) {
-                startNewRound(mpTable,Game);
+                startNewRound(Game);
             }
             return;
         } else if (!started && !message.content.search(regex) >= 0) {
@@ -373,8 +374,8 @@ exports.privateMessage = (message, Game,started,mpTable) => {
                 let idWinner = Game.getBestPlayerScore();
                 let nameWinner = Game.getPlayerUserName(idWinner);
                 let scoreWinner = Game.getPlayerScore(idWinner);
-                let mptabtemp = mpTable.slice();
-                mpTable = null;
+                let mptabtemp = Game.mpTable.slice();
+                Game.mpTable = [];
 
                 mptabtemp.forEach(e => {
                     e.send("Le Blind test est fini le Gagnant est " + nameWinner + " avec " + scoreWinner +" de score.:crab::ok_woman:");
@@ -384,7 +385,7 @@ exports.privateMessage = (message, Game,started,mpTable) => {
                 
             }else{
                 Game.curRound++;
-                startNewRound(mpTable, Game);
+                startNewRound(Game);
             }
         }else{
             message.author.send("En attente des autre joueurs.... ");

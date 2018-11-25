@@ -25,6 +25,8 @@ class Partie {
         this.carreSol = null;
         this.timerValue = 0;
         this.timerId = null; 
+        this.mpTable = [];
+        this.started = false;
     }
 
     addPlayer(playerID,username) {

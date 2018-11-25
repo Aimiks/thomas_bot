@@ -1,6 +1,6 @@
 const lewho_TOKEN = 'NTE1NjYwMzQ1MTI2MTU4MzQ3.DtoWGw.V8xlVNyMDL6QohpLvDPJCdAIcwA';
 const mx_TOKEN = 'MzE4Nzc1NDgxNTE0MDY1OTIw.DsecPg.P2ggfh1QZQghQbjDx834n2Z8Plg';
-const TOKEN = lewho_TOKEN;
+const TOKEN = mx_TOKEN;
 const YTKEY = 'AIzaSyByJq7Dq91jNOYGESfWC1hjl84Kg-kzZHI';
 
 const Discord = require('discord.js'); // Require the Discord.js library.
@@ -60,15 +60,14 @@ client.on('message', (message) => {
         let noRounds = message.content.split(' ')[1];
         let seed = message.content.split(' ')[2];
         Game = new Partie(noRounds, seed);
-        commands.blindTest.play(message, mpTable, Game);
-        console.log(mpTable);
+        Game.started = true;
+        commands.blindTest.play(message, Game);
         
     }
 
 	if (message.guild === null){        
-        if (mpTable.includes(message.author)) {
-            console.log(mpTable[0].id);
-            commands.blindTest.privateMessage(message,Game,started,mpTable)
+        if (Game.mpTable.includes(message.author)) {
+            commands.blindTest.privateMessage(message,Game)
         }
 	}
 });
