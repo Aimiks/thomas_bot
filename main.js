@@ -12,10 +12,14 @@ const Partie = require('./model/Partie.js');
 const Player = require('./model/Player.js');
 const Bot = require('./model/Bot.js');
 
-
+var ytsearch = require('youtube-search');
+var opts = {
+    maxResults: 1,
+    key: YTKEY
+  };
 
 //var mpTable = ["Lewho", "「Mx」"];
-var Game;
+var Game = null;
 
 
 const client = new Bot();
@@ -81,7 +85,7 @@ client.on('message', (message) => {
         
     }
 
-	if (message.guild === null){        
+	if (message.guild === null && Game !== null){        
         if (Game.mpTable.includes(message.author)) {
             commands.blindTest.privateMessage(message,Game)
         }
@@ -128,6 +132,18 @@ client.on('message', (message) => {
     if (message.guild === null && message.content.startsWith(">roll")) {
         //seedrandom("27");
         message.author.send(Math.random());
-    }    
+    }
+
+
+    if (message.guild === null && message.content.startsWith(">search ")) {
+        let arg = message.content.substr(8);
+        console.log(message.content);
+        console.log(arg);
+        
+        ytsearch(arg, opts, function(err, results) {
+            if(err) return console.log(err);            
+            message.author.send(results[0].link);
+          });    
+    }
 });
 
