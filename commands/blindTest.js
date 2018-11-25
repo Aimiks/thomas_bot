@@ -265,7 +265,7 @@ exports.play = (message, mpTable, Game) => {
                 }
                 let element = mem[index];
                 mpTable.push(element.user);
-                Game.addPlayer(element.id);
+                Game.addPlayer(element.id,element.user.username);
                 element.send(":crab:Hi ready to play ?:crab:")
             }
 
@@ -306,8 +306,12 @@ function startNewRound(mpTable, Game) {
 /**
 * @param {import('discord.js').Message} message 
 * @param {Partie} Game 
+* @param {import('discord.js').User[]} mpTable
 */
 exports.privateMessage = (message, Game,started,mpTable) => {
+    if (message.author.bot) {
+        return;
+    }
     let regex = /(oui|o)|(y*$|yes)/gmi;
     if (!Game.areAllPlayersReady()) {
         if (message.content.search(regex) >= 0) {
@@ -363,8 +367,23 @@ exports.privateMessage = (message, Game,started,mpTable) => {
 
         if (Game.playersHaveResponded) {
             Game.reset();
-            Game.curRound++;
-            startNewRound(mpTable, Game);
+            if (Game.curRound === Game.noRounds-1) {
+                let idWinner = Game.getBestPlayerScore();
+                let nameWinner = Game.getPlayerUserName(idWinner);
+                let scoreWinner = Game.getPlayerScore(idWinner);
+                let mptabtemp = mpTable.slice();
+                mpTable = null;
+
+                mptabtemp.forEach(e => {
+                    e.send("Le Blind test est fini le Gagnant est " + nameWinner + " avec " + scoreWinner +" de score.:crab::ok_woman:");
+                });
+
+                return;
+                
+            }else{
+                Game.curRound++;
+                startNewRound(mpTable, Game);
+            }
         }else{
             message.author.send("En attente des autre joueurs.... ");
         }

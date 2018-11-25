@@ -27,8 +27,8 @@ class Partie {
         this.timerId = null; 
     }
 
-    addPlayer(playerID) {
-        this.players.push(new Player(playerID));
+    addPlayer(playerID,username) {
+        this.players.push(new Player(playerID,username));
     }
 
     areAllPlayersReady(){
@@ -133,6 +133,20 @@ class Partie {
     getPlayerScore(playerID) {
         let curPlayer =  this.players.find((p) => p.ID === playerID);
         return curPlayer.score;
+    }
+    getPlayerUserName(playerID) {
+        let curPlayer =  this.players.find((p) => p.ID === playerID);
+        return curPlayer.username;
+    }
+
+    getBestPlayerScore() {
+        let best = this.players[0];
+        this.players.forEach(e => {
+            if (best.score < e.score) {
+                best = e;
+            }
+        });
+        return best.ID;
     }
     
 };

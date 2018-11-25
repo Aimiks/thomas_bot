@@ -1,6 +1,7 @@
 class Player{
-    constructor(ID) {
+    constructor(ID, username) {
         this.ID = ID;
+        this.username = username;
         this.isReady = false;
         this.isModeSelected = false;
         this.hasResponded = false;
