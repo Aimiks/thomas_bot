@@ -118,23 +118,25 @@ exports.add = (Discord, client, message, YTKEY) => {
 
         //callback for the addToJsonFile
         let callback = (already_have) => {
-            let warning;
+            let warning ="";
             if (already_have.length > 0) {
-                res = res.filter((ind, a) => args[ind] !== already_have[ind]);
-                warning = `:warning: Certains animes n'ont pas été ajoutés car ils existent déjà dans la liste : ${already_have.join(', ')}.`;
+                res = res.filter((a, ind) => !already_have.includes(args[ind]));
+
+                warning = `\n:warning: Certains animes n'ont pas été ajoutés car ils existent déjà dans la liste : ${already_have.join(', ')}.`;
             }
             let embed = new Discord.RichEmbed(opt);
             res.forEach((r, ind) => {
                 embed.addField(`${args[ind]}`, `[${r.title}](${r.url})`);
             });
+            let state_msg = "";
             if(res.length===0) {
-                message.channel.send(`:x: Aucun animes n'a été ajoutés.`);
+                state_msg = ":x: Aucun animes n'a été ajoutés.";
             } else {
-                message.channel.send(`:heavy_plus_sign: Animes ajoutés !`);
+                state_msg = ":heavy_plus_sign: Animes ajoutés !";
                 message.author.send(embed);
             }
-            if (warning)
-                message.channel.send(warning);
+            state_msg+=warning;
+            message.channel.send(state_msg);
             
 
         }
