@@ -315,7 +315,7 @@ exports.privateMessage = (message, Game) => {
     if (message.author.bot) {
         return;
     }
-    let regex = /(oui|o)|(y*$|yes)/gmi;
+    let regex = /(^ok$)|(^oui$)|(^o$)|(^yes$)|(^y$)|(^go$)/gmi;
     if (!Game.areAllPlayersReady()) {
         if (message.content.search(regex) >= 0) {
             Game.playerReady(message.author.id);
