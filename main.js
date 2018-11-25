@@ -95,9 +95,13 @@ client.on('message', (message) => {
     if (!message.author.bot) {
         if (message.content.startsWith(commands.blindTest.prefix.add)) {
             commands.blindTest.add(Discord, client, message, YTKEY);
-        }
-        if(message.content.startsWith(">test")) {
+        } else if (message.content.startsWith(">test")) {
             commands.blindTest.util.unserializeAnimeList( (res) => console.log(res));
+        } else if (message.content.startsWith(commands.blindTest.prefix.replace)) {
+            commands.blindTest.replaceLink(message);
+        } else if (message.content.startsWith(commands.blindTest.prefix.remove)) {
+            commands.blindTest.remove(message);
         }
+        
     }
 });
