@@ -27,6 +27,7 @@ class Partie {
         this.timerId = null; 
         this.mpTable = [];
         this.started = false;
+        this.connection = null;
     }
 
     addPlayer(playerID,username) {

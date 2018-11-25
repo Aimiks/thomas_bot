@@ -1,6 +1,6 @@
 const lewho_TOKEN = 'NTE1NjYwMzQ1MTI2MTU4MzQ3.DtoWGw.V8xlVNyMDL6QohpLvDPJCdAIcwA';
 const mx_TOKEN = 'MzE4Nzc1NDgxNTE0MDY1OTIw.DsecPg.P2ggfh1QZQghQbjDx834n2Z8Plg';
-const TOKEN = mx_TOKEN;
+const TOKEN = lewho_TOKEN;
 const YTKEY = 'AIzaSyByJq7Dq91jNOYGESfWC1hjl84Kg-kzZHI';
 
 const Discord = require('discord.js'); // Require the Discord.js library.
@@ -31,25 +31,43 @@ client.on('ready', function () {
     console.log("Je suis connecté !");
 });
 
-/*
+
+///////////////
+/////////Commandes play/switch/pause/unpause
+////////////
+var dispatcher;
+var streamOptions;
+var stream;
+var conn;
 // Music
 client.on('message', (message) => {
-    if (message.content.startsWith('>play ')) {
+    if (message.content.startsWith('>playL ')) {
         let arg = message.content.split(' ')[1];
         let link = arg.split('&')[0]; // remove extra parameters from yt
-        const streamOptions = { seek: 0, volume: 1 };
+        //const streamOptions = { seek: 0, volume: 1 };
         var voiceChannel = message.member.voiceChannel;
         voiceChannel.join().then(connection => {
+            conn = connection;
             console.log("joined channel");
-            const stream = ytdl(link, { filter: 'audioonly' });
-            const dispatcher = connection.playStream(stream, streamOptions);
-            dispatcher.on("end", end => {
-                console.log("left channel");
-                voiceChannel.leave();
-            });
+            streamOptions = { seek: 0, volume: 1 };
+            stream = ytdl(link, { filter: 'audioonly' });
+            dispatcher = connection.playStream(stream, streamOptions);
         }).catch(err => console.log(err));
+    }else if(message.content.startsWith('>pauseL')){
+        dispatcher.pause();
+    }else if(message.content.startsWith('>unpauseL')){
+        dispatcher.resume();
+    }else if(message.content.startsWith('>switchOnL ')){
+        let arg = message.content.split(' ')[1];
+        let link = arg.split('&')[0]; // remove extra parameters from yt
+
+        streamOptions = { seek: 0, volume: 1 };
+        stream = ytdl(link, { filter: 'audioonly' });
+        dispatcher = conn.playStream(stream, streamOptions);
     }
-});*/
+});
+
+
 
 client.on('message', (message) => {
     if (message.author.bot) {return;}

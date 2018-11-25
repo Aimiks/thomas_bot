@@ -266,6 +266,7 @@ exports.play = (message, Game) => {
                     continue;
                 }
                 let element = mem[index];
+                Game.connection = connection;
                 Game.mpTable.push(element.user);
                 Game.addPlayer(element.id,element.user.username);
                 element.send(":crab:Hi ready to play ?:crab:")
