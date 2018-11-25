@@ -288,6 +288,22 @@ exports.play = (message, mpTable, Game) => {
 }
 
 /**
+ * 
+ * @param {String[]} mpTable 
+ * @param {Partie} Game 
+ */
+function startNewRound(mpTable, Game) {
+    mpTable.forEach(e => {
+        e.send("La Prochaine Manche va commencer");
+        e.send("Choisi\n1: Reponse Ouverte\n2: 4 Propositions\n3: 2 Propositions\n");
+    });
+    if(Game.timerId) clearInterval(Game.timerId);
+    Game.timerValue = 0;
+    Game.timerId = setInterval(() => {
+        Game.timerValue+=0.01;
+    }, 10);
+}
+/**
 * @param {import('discord.js').Message} message 
 * @param {Partie} Game 
 */
@@ -298,10 +314,7 @@ exports.privateMessage = (message, Game,started,mpTable) => {
             Game.playerReady(message.author.id);
 
             if (Game.areAllPlayersReady()) {
-                mpTable.forEach(e => {
-                    e.send("La Prochaine Manche va commencer");
-                    e.send("Choisi\n1: Reponse Ouverte\n2: 4 Propositions\n3: 2 Propositions\n");
-                });
+                startNewRound(mpTable,Game);
             }
             return;
         } else if (!started && !message.content.search(regex) >= 0) {
@@ -309,8 +322,12 @@ exports.privateMessage = (message, Game,started,mpTable) => {
             return;
         }
     }
-    let t = 8;
-    if (Game.getPlayerSelectModeState(message.author.id)) {        
+    if (Game.getPlayerSelectModeState(message.author.id)) {     
+        let replied_number = -1;
+        message.content = message.content.trim();
+        if(!isNaN(message.content)) {
+            replied_number = parseInt(message.content);
+        }   
         switch (Game.getPlayerSelectMode(message.author.id)) {
             case 1:
             Game.playerHaveResponded(message.author.id);
@@ -319,38 +336,37 @@ exports.privateMessage = (message, Game,started,mpTable) => {
                 
                 if (Game.listSongs[Game.curRound].name === message.content) {
                     console.log("Player " + message.author.username+ " find the response");
-                    Game.playerAddScore( message.author.id ,( 1/t*12 ) * 5);
+                    Game.playerAddScore( message.author.id, ( 1/Game.timerValue*12 ) * 5);
                 }
                 break;
             case 2:
             Game.playerHaveResponded(message.author.id);
                 ///formule : (1/t*8) * 3 pts
-                if (message.content === Game.carreSol) {
+                if (replied_number === Game.carreSol) {
                     console.log("Player " + message.author.username+ " find the response");
-                    Game.playerAddScore( message.author.id ,(1/t*8) * 3);
+                    Game.playerAddScore( message.author.id, (1/Game.timerValue*8) * 3);
                 }
                 break;
             case 3:
             Game.playerHaveResponded(message.author.id);
                 ///Formule : 1/t*2+1
-                if (message.content === Game.duoSol) {
+                if (replied_number === Game.duoSol) {
                     console.log("Player " + message.author.username+ " find the response");
-                    Game.playerAddScore( message.author.id ,1/t*2+1);
+                    Game.playerAddScore( message.author.id ,1/Game.timerValue*2+1);
                 }
                 break;
         }
+        console.log("Timer value : " + Game.timerValue);
+        console.log(`${message.author.username} a ${Game.getPlayerScore(message.author.id)} points de score`);
 
         message.author.send("Le bonne reponse etait " + Game.listSongs[Game.curRound].name + " " + Game.listSongs[Game.curRound].link);
 
         if (Game.playersHaveResponded) {
             Game.reset();
             Game.curRound++;
-            mpTable.forEach(e => {
-                e.send("La Prochaine Manche va commencer");
-                e.send("Choisi\n1: Reponse Ouverte\n2: 4 Propositions\n3: 2 Propositions\n");
-            });
+            startNewRound(mpTable, Game);
         }else{
-            message.author.send("En attante des autre joueurs.... ");
+            message.author.send("En attente des autre joueurs.... ");
         }
         
 

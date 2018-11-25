@@ -23,6 +23,8 @@ class Partie {
         this.duoSol = null;
         this.carre = null;
         this.carreSol = null;
+        this.timerValue = 0;
+        this.timerId = null; 
     }
 
     addPlayer(playerID) {
@@ -85,7 +87,7 @@ class Partie {
         if (this.duo === null) {
             let theId = Math.floor(Math.random()*2);
             let tab1 = [];
-            this.duoSol = theId;
+            this.duoSol = theId+1;
             for (let index = 0; index < 2; index++) {
                 if (index === theId) {
                     tab1[index] = this.listSongs[this.curRound].name;
@@ -106,7 +108,7 @@ class Partie {
         if (this.carre === null) {
             let theId = Math.floor(Math.random()*4);
             let tab2 = [];
-            this.carreSol = theId;
+            this.carreSol = theId+1;
             for (let index = 0; index < 4; index++) {
                 if (index === theId) {
                     tab2[index] = this.listSongs[this.curRound].name;
@@ -126,6 +128,11 @@ class Partie {
         let curPlayer =  this.players.find((p) => p.ID === playerID);
         
         curPlayer.score += scoreToAdd;
+    }
+
+    getPlayerScore(playerID) {
+        let curPlayer =  this.players.find((p) => p.ID === playerID);
+        return curPlayer.score;
     }
     
 };
