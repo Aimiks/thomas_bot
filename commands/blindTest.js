@@ -22,7 +22,7 @@ let addToJsonFile = function (animes, callback = null) {
     let already_have = [];
     animes.forEach(a => {
         // add anime.name property that contains animes property to have an easy browse
-        animes_obj[a.name] = { ...a };
+        animes_obj[a.name + " " + a.type] = { ...a };
     });
     let json_list = JSON.stringify(animes_obj);
     fs.exists('animelist.json', bool => {
@@ -33,11 +33,11 @@ let addToJsonFile = function (animes, callback = null) {
                 let obj = JSON.parse(res);
                 animes.forEach(anime => {
                     // if the list doesn't already have the anime
-                    if (!obj[anime.name]) {
+                    if (!obj[anime.name + " " + anime.type]) {
                         // add it to the list
-                        obj[anime.name] = { ...anime }
+                        obj[anime.name + " " + anime.type] = { ...anime }
                     } else {
-                        already_have.push(anime.name);
+                        already_have.push(anime.name  + " " + anime.type);
                     }
                 });
                 json_list = JSON.stringify(obj);
@@ -49,6 +49,7 @@ let addToJsonFile = function (animes, callback = null) {
         } else {
             fs.writeFile('animelist.json', json_list, 'utf8', err => {
                 if (err) throw err;
+                if (callback) callback(already_have);
             });
         }
     });
@@ -89,17 +90,33 @@ exports.util = {
  * Args = animes... || links...
  */
 exports.add = (Discord, client, message, YTKEY) => {
+
     const searcher = new YTSearcher(YTKEY);
     let bt_queue;
     let args = message.content.split(",");
+    // regex to find type
+    let regex = /ed[1-9][0-9]?$|op[1-9][0-9]?$|ost[1-9][0-9]?$/gim
+    let types = [];
+    let names = [];
+
+    //trim the args
+    args = args.map((arg) => arg.trim());
     // remove command prefix from args
     args[0] = args[0].substring(prefix.add.length);
     if (args[0].length === 0) {
-        message.reply(`Veuillez renseigner des animes à ajouter.\nEx : ${prefix.add} mirai nikki op1, big order ed1`);
+        message.channel.send(`Veuillez renseigner des animes à ajouter.\nEx : ${prefix.add} mirai nikki op1, big order ed1`);
         return;
     }
-    //trim the args
-    args = args.map((arg) => arg.trim());
+    args.forEach( (arg) => {
+        let matches = arg.match(regex);
+        if(!matches) {
+            message.channel.send(`:x: ${arg} ne contient aucun type. Chaques anime doit avoir un type (opN, edN, ostN).`)
+            return;
+        }
+        types.push(matches[0]);
+        names.push(arg.replace(regex,'').trim());
+    });
+
     // create an array of promise from the yt searcher
     bt_queue = args.map((arg) => searcher.search(arg));
     // when all promises are done
@@ -111,16 +128,17 @@ exports.add = (Discord, client, message, YTKEY) => {
             color: client.resolver.resolveColor([226, 186, 99])
         };
         res = res.map(r => r.first);
+        console.log(res[0]);
         let animes = [];
         res.forEach((r, ind) => {
-            animes.push(new Anime(args[ind], "osef atm", r.url));
+            animes.push(new Anime(names[ind], types[ind], r.url));
         });
 
         //callback for the addToJsonFile
         let callback = (already_have) => {
             let warning ="";
             if (already_have.length > 0) {
-                res = res.filter((a, ind) => !already_have.includes(args[ind]));
+                res = res.filter((a, ind) => !already_have.includes(names[ind] + " " + types[ind]));
 
                 warning = `\n:warning: Certains animes n'ont pas été ajoutés car ils existent déjà dans la liste : ${already_have.join(', ')}.`;
             }
