@@ -1,5 +1,6 @@
 const Player = require('./Player.js');
 const seedrandom = require("seedrandom");
+const blindTest = require("../commands/blindTest");
 
 
 
@@ -12,11 +13,16 @@ class Partie {
         }else{
             this.ID = ID
         }
-        var rng = seedrandom(this.ID);
+        var rng = Math.seedrandom(this.ID);
         this.players = [];
+        this.listAllSongs = [];
         this.listSongs = [];
         this.playersReady = false;
         this.playersHaveResponded = false;
+        this.duo = null;
+        this.duoSol = null;
+        this.carre = null;
+        this.carreSol = null;
     }
 
     addPlayer(playerID) {
@@ -47,6 +53,7 @@ class Partie {
     setPlayerSelectMode(playerID,modeType){
         let curPlayer =  this.players.find((p) => p.ID === playerID);
         curPlayer.modeType = modeType;
+        this.playerHaveSelectMode(playerID);
     }
     getPlayerSelectMode(playerID){
         let curPlayer =  this.players.find((p) => p.ID === playerID);
@@ -54,6 +61,7 @@ class Partie {
     }
     playerHaveResponded(playerID){
         let curPlayer =  this.players.find((p) => p.ID === playerID);
+        console.log(curPlayer.ID);
         curPlayer.hasResponded = true;
         if (this.areAllPlayersHaveResponded()) {
             this.playersHaveResponded = true;
@@ -68,7 +76,58 @@ class Partie {
         this.players.forEach(element => {
             element.reset();
         });
+        this.playersHaveResponded = false;
+        this.duo = null;
+        this.carre = null;
     }
+
+    getDuo(){
+        if (this.duo === null) {
+            let theId = Math.floor(Math.random()*2);
+            let tab1 = [];
+            this.duoSol = theId;
+            for (let index = 0; index < 2; index++) {
+                if (index === theId) {
+                    tab1[index] = this.listSongs[this.curRound].name;
+                }else{
+                    let rng = Math.floor(Math.random()*this.listAllSongs.length);                        
+                    tab1[index] = this.listAllSongs[rng].name;
+                }
+            }
+            this.duo = tab1;
+            return this.duo;
+        }
+        else{
+            return this.duo;
+        }
+    }
+
+    getCarre(){
+        if (this.carre === null) {
+            let theId = Math.floor(Math.random()*4);
+            let tab2 = [];
+            this.carreSol = theId;
+            for (let index = 0; index < 4; index++) {
+                if (index === theId) {
+                    tab2[index] = this.listSongs[this.curRound].name;
+                }else{
+                    tab2[index] = this.listAllSongs[Math.floor(Math.random()*this.listAllSongs.length)].name;
+                }
+            }
+            this.carre = tab2;
+            return tab2;
+        }
+        else{
+            return this.carre;
+        }
+    }
+
+    playerAddScore(playerID,scoreToAdd){
+        let curPlayer =  this.players.find((p) => p.ID === playerID);
+        
+        curPlayer.score += scoreToAdd;
+    }
+    
 };
 
 module.exports = Partie;
