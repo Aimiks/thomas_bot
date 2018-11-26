@@ -14,10 +14,12 @@ const prefix = {
 }
 module.exports.prefix = prefix;
 
+
+
 /**
  * 
  * @param {Anime[]} animes 
- * @param {function} callback 
+ * @param {Function} callback 
  */
 let addToJsonFile = function (animes, callback = null) {
     let animes_obj = {};
@@ -58,6 +60,8 @@ let addToJsonFile = function (animes, callback = null) {
     });
 }
 
+
+
 /**
  * @param {function} callback 
  */
@@ -83,7 +87,8 @@ let unserializeAnimeList = function (callback) {
 }
 
 exports.util = {
-    unserializeAnimeList
+    unserializeAnimeList,
+    addToJsonFile
 };
 
 
@@ -111,7 +116,7 @@ module.exports.add = (Discord, client, message, YTKEY) => {
     args.forEach( (arg) => {
         let matches = arg.match(regex);
         if(!matches) {
-            message.channel.send(`:x: ${arg} ne contient aucun type. Chaques anime doit avoir un type (opN, edN, ostN).`)
+            message.channel.send(`:x: ${arg} ne contient aucun type. Chaques anime doit avoir un type (opN, edN, ostN) __**en dernier argument**__.`)
             return;
         }
         types.push(matches[0]);
@@ -135,7 +140,7 @@ module.exports.add = (Discord, client, message, YTKEY) => {
         res = res.map(r => r.results[0]);
         let animes = [];
         res.forEach((r, ind) => {
-            animes.push(new Anime(names[ind], types[ind], r.link));
+            animes.push(new Anime(names[ind].toLowerCase(), types[ind].toLowerCase(), r.link));
         });
 
         //callback for the addToJsonFile
@@ -256,6 +261,7 @@ module.exports.remove = (message) => {
                     message.channel.send("L'index fournit ne correspond à aucune entrée dans l'anime liste");
                     return;
                 }
+                let tmp = obj[index];
                 delete obj[index];
                 json_list = JSON.stringify(obj);
                 fs.writeFile('animelist.json', json_list, 'utf8', err => {
@@ -263,7 +269,7 @@ module.exports.remove = (message) => {
                         message.channel.send("Une erreur est survenue");
                         throw err;
                     } else {
-                        message.channel.send(":ballot_box_with_check: Anime supprimé !");
+                        message.channel.send(`:ballot_box_with_check: Anime ${tmp.name} ${tmp.type} supprimé !`);
                     }
                 });
             });

@@ -23,7 +23,7 @@ client.music.start(client, {
 });
 client.login(BOT_TOKEN);
 client.on('ready', function () {
-    console.log("Je suis connecté !");
+    console.log(`Je suis connecté à ${client.guilds.array().length} serveur(s) !`);
 });
 
 
@@ -37,8 +37,7 @@ var conn;
 // Music
 client.on('message', (message) => {
     if (message.content.startsWith('>playL ')) {
-        let arg = message.content.split(' ')[1];
-        let link = arg.split('&')[0]; // remove extra parameters from yt
+        let link = message.content.split(' ')[1];
         //const streamOptions = { seek: 0, volume: 1 };
         var voiceChannel = message.member.voiceChannel;
         voiceChannel.join().then(connection => {
@@ -66,21 +65,51 @@ client.on('message', (message) => {
 
 client.on('message', (message) => {
     if (message.author.bot) {return;}
-
-    if (message.content.startsWith(commands.blindTest.prefix.play)) {
-        let noRounds = message.content.split(' ')[1];
-        let seed = message.content.split(' ')[2];
-        Game = new Partie(noRounds, seed);
-        Game.started = true;
-        commands.blindTest.play(message, Game);
-        
-    }
-
-	if (message.guild === null && Game !== null){        
-        if (Game.mpTable.includes(message.author)) {
-            commands.blindTest.privateMessage(message,Game)
+    message.content = message.content.toLowerCase();
+    /** PRIVATE MESSAGE */
+    if(message.guild === null) {
+        if ( Game !== null){        
+            if (Game.mpTable.includes(message.author)) {
+                commands.blindTest.privateMessage(message,Game);
+            }
         }
-	}
+  
+    } 
+    /** NO PRIVATE MESSAGE */  
+    else {
+        /** PLAY BLINDTEST */
+        if (message.content.startsWith(commands.blindTest.prefix.play)) {
+            let noRounds = message.content.split(' ')[1];
+            let seed = message.content.split(' ')[2];
+            Game = new Partie(noRounds, seed);
+            Game.started = true;
+            commands.blindTest.play(message, Game);
+        } 
+        /** ADD TO BLINDTEST */
+        else if (message.content.startsWith(commands.blindTest.prefix.add)) {
+            commands.blindTest.add(Discord, client, message, YT_KEY);
+        } 
+        /** REPLACE ANIME SONG LINK IN BLINDTEST  */
+        else if (message.content.startsWith(commands.blindTest.prefix.replace)) {
+            commands.blindTest.replaceLink(message);
+        } 
+        /** REMOVE ANIME IN BLINDTEST */
+        else if (message.content.startsWith(commands.blindTest.prefix.remove)) {
+            commands.blindTest.remove(message);
+        }
+
+        /** TEST COMMANDS */
+
+        /** ROLL TEST RANDOM */
+        else if (message.guild === null && message.content.startsWith(">roll")) {
+            //seedrandom("27");
+            message.author.send(Math.random());
+        } 
+        /** TEST UNSERIALIZE */
+        else if (message.content.startsWith(">test")) {
+            commands.blindTest.util.unserializeAnimeList( (res) => console.log(res));
+        }
+    }
 });
 
 
@@ -98,31 +127,6 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
 
     } else if (newUserChannel === undefined) {
         // User leaves a voice channel
-    }
-});
-
-client.on('message', (message) => {
-    if (!message.author.bot) {
-        if (message.content.startsWith(commands.blindTest.prefix.add)) {
-            commands.blindTest.add(Discord, client, message, YT_KEY);
-        } else if (message.content.startsWith(">test")) {
-            commands.blindTest.util.unserializeAnimeList( (res) => console.log(res));
-        } else if (message.content.startsWith(commands.blindTest.prefix.replace)) {
-            commands.blindTest.replaceLink(message);
-        } else if (message.content.startsWith(commands.blindTest.prefix.remove)) {
-            commands.blindTest.remove(message);
-        }
-        
-    }
-});
-
-client.on('message', (message) => {
-    if (message.author.bot) {
-        return;
-    }
-    if (message.guild === null && message.content.startsWith(">roll")) {
-        //seedrandom("27");
-        message.author.send(Math.random());
     }
 });
 
