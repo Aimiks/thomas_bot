@@ -463,36 +463,19 @@ module.exports.privateMessage = (message, Game) => {
  * @param {string} anwser 
  */
 function IAAdapt(rightAnwser,anwser) {
-    if (rightAnwser.length <= 6 && !rightAnwser.includes(" ")) {
+    let newRightAnwser =  rightAnwser.replace(" ","");
+    let newAnwser = anwser.replace(" ","");
+    let coerence = stringSimilarity.compareTwoStrings(newAnwser , newRightAnwser);
+
+    if (rightAnwser.length <= 6) {
         return rightAnwser === anwser;
-    }else if (rightAnwser.length <= 6 && rightAnwser.includes(" ")) {
-        let newRightAnwser =  rightAnwser.replace(" ","");
-        let newAnwser = anwser.replace(" ","");
-
-        return newRightAnwser === newAnwser;
-    }
-    else if(rightAnwser.length > 6 && rightAnwser.length <= 12){
-        let newRightAnwser =  rightAnwser.replace(" ","");
-        let newAnwser = anwser.replace(" ","");
-        
-        let coerence = stringSimilarity.compareTwoStrings(newAnwser , newRightAnwser);
-
+    }else if(rightAnwser.length > 6 && rightAnwser.length <= 12){       
         return coerence > 0.8;
     }
     else if (rightAnwser.length > 12 && rightAnwser.length <= 20) {
-        let newRightAnwser =  rightAnwser.replace(" ","");
-        let newAnwser = anwser.replace(" ","");
-        
-        let coerence = stringSimilarity.compareTwoStrings(newAnwser , newRightAnwser);
-
         return coerence > 0.70;
     }
     else if (rightAnwser.length > 20) {
-        let newRightAnwser =  rightAnwser.replace(" ","");
-        let newAnwser = anwser.replace(" ","");
-        
-        let coerence = stringSimilarity.compareTwoStrings(newAnwser , newRightAnwser);
-
         return coerence > 0.55;
     }
 }
