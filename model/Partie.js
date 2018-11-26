@@ -3,7 +3,6 @@ const seedrandom = require("seedrandom");
 const blindTest = require("../commands/blindTest");
 
 
-
 class Partie {
     constructor(noRounds, ID = null) {
         this.noRounds = noRounds;
@@ -15,7 +14,9 @@ class Partie {
         }
         var rng = Math.seedrandom(this.ID);
         this.players = [];
+        /** @type {import('./Anime')[]}*/
         this.listAllSongs = [];
+        /** @type {import('./Anime')[]}*/
         this.listSongs = [];
         this.playersReady = false;
         this.playersHaveResponded = false;
@@ -27,7 +28,10 @@ class Partie {
         this.timerId = null; 
         this.mpTable = [];
         this.started = false;
+        /** @type {import('discord.js').VoiceConnection} */
         this.connection = null;
+        /** @type {import('discord.js').VoiceChannel} */
+        this.voiceChannel = null;
     }
 
     addPlayer(playerID,username) {
@@ -150,6 +154,13 @@ class Partie {
             }
         });
         return best.ID;
+    }
+
+    /**
+     * @return {import('./Anime')} anime
+     */
+    getCurrentRoundAnime() {
+        return this.listSongs[this.curRound];
     }
     
 };

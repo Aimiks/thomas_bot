@@ -2,6 +2,8 @@ const Anime = require('../model/Anime.js');
 const fs = require('fs');
 const Partie = require('../model/Partie.js');
 const ytsearch = require('youtube-search');
+const ytdl = require('ytdl-core');
+
 
 
 const prefix = {
@@ -288,9 +290,10 @@ exports.play = (message, Game) => {
                 }
                 let element = mem[index];
                 Game.connection = connection;
+                Game.voiceChannel = voiceChannel;
                 Game.mpTable.push(element.user);
                 Game.addPlayer(element.id,element.user.username);
-                element.send(":crab:Hi ready to play ?:crab:")
+                element.send(":crab: Hi ready to play ? :crab: (yes/no)");
             }
 
         });
@@ -321,11 +324,19 @@ function startNewRound(Game) {
         e.send("La Prochaine Manche va commencer");
         e.send("Choisi\n1: Reponse Ouverte\n2: 4 Propositions\n3: 2 Propositions\n");
     });
+    // play song
+    let streamOptions = { seek: 0, volume: 1 };
+    let stream = ytdl(Game.getCurrentRoundAnime().link, { filter: 'audioonly' });
+    Game.connection.playStream(stream, streamOptions);
+
+    // clear en start timer
     if(Game.timerId) clearInterval(Game.timerId);
     Game.timerValue = 0;
     Game.timerId = setInterval(() => {
         Game.timerValue+=0.01;
     }, 10);
+    
+
 }
 /**
 * @param {import('discord.js').Message} message 
@@ -347,7 +358,7 @@ exports.privateMessage = (message, Game) => {
             }
             return;
         } else if (!started && !message.content.search(regex) >= 0) {
-            message.author.send("You must respond [y]es/[o]ui");
+            message.author.send("Vous devez répondre [y]es/[o]ui");
             return;
         }
     }
@@ -363,8 +374,8 @@ exports.privateMessage = (message, Game) => {
                 ///formule : ( 1/t*12 ) * 5pts
                 console.log(message.content + " et " + Game.listSongs[Game.curRound].name);
                 
-                if (Game.listSongs[Game.curRound].name === message.content) {
-                    console.log("Player " + message.author.username+ " find the response");
+                if (Game.listSongs[Game.curRound].name.toLowerCase === message.content.toLowerCase) {
+                    console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
                     Game.playerAddScore( message.author.id, ( 1/Game.timerValue*12 ) * 5);
                 }
                 break;
@@ -372,7 +383,7 @@ exports.privateMessage = (message, Game) => {
             Game.playerHaveResponded(message.author.id);
                 ///formule : (1/t*8) * 3 pts
                 if (replied_number === Game.carreSol) {
-                    console.log("Player " + message.author.username+ " find the response");
+                    console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
                     Game.playerAddScore( message.author.id, (1/Game.timerValue*8) * 3);
                 }
                 break;
@@ -380,7 +391,7 @@ exports.privateMessage = (message, Game) => {
             Game.playerHaveResponded(message.author.id);
                 ///Formule : 1/t*2+1
                 if (replied_number === Game.duoSol) {
-                    console.log("Player " + message.author.username+ " find the response");
+                    console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
                     Game.playerAddScore( message.author.id ,1/Game.timerValue*2+1);
                 }
                 break;
@@ -402,7 +413,8 @@ exports.privateMessage = (message, Game) => {
                 mptabtemp.forEach(e => {
                     e.send(`:headphones: Le blind test est finit !\n:first_place: Le gagnant est __${nameWinner}__ avec **${scoreWinner.toFixed(2)}** de score. :crab: :ok_woman:`);
                 });
-
+                Game.started = false;
+                Game.voiceChannel.leave();
                 return;
                 
             }else{
@@ -410,7 +422,7 @@ exports.privateMessage = (message, Game) => {
                 startNewRound(Game);
             }
         }else{
-            message.author.send("En attente des autre joueurs.... ");
+            message.author.send("En attente des autres joueurs.... ");
         }
         
 
@@ -418,22 +430,22 @@ exports.privateMessage = (message, Game) => {
 
         switch (message.content) {
             case "1":
-                message.author.send("Quel est votre reponse ouverte ?");
+                message.author.send("Quel est votre réponse ouverte ?");
                 Game.setPlayerSelectMode(message.author.id, 1);
                 break;
             case "2":
             let temptab1 = Game.getCarre();
 
-                message.author.send("1: "+temptab1[0]+"\n2: "+temptab1[1]+"\n3: "+temptab1[2]+"\n4: "+temptab1[3]);
+                message.author.send(":one: "+temptab1[0]+"\n:two: "+temptab1[1]+"\n:three: "+temptab1[2]+"\n:four: "+temptab1[3]);
                 Game.setPlayerSelectMode(message.author.id, 2);
                 break;
             case "3":
             let temptab2 = Game.getDuo();            
-                message.author.send("1: "+temptab2[0]+"\n2: "+temptab2[1]);
+                message.author.send(":one: "+temptab2[0]+"\n:two: "+temptab2[1]);
                 Game.setPlayerSelectMode(message.author.id, 3);
                 break;
             default:
-                message.author.send("reponse attendu 1 2 ou 3");
+                message.author.send("Réponse attendue 1, 2 ou 3");
                 break;
         }
     }
