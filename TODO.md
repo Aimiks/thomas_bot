@@ -14,3 +14,7 @@
 * ~~**Lancer la musique**~~
 * ajouter l'option ost:nom_ost
 * `>btadd` ligne 162, faire une méthode ou c'est sûr que le l'arg affiché est le bon par rapport au title et link
+* des fois je met des $ à la fin et ça compte pas => fix stp
+* propositions uniques
+* replace était buggé et ajouté un .url, faire un script pour que si y'a un .url cela devient le .link
+* pour le replace, pas de lower case

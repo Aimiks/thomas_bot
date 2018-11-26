@@ -215,7 +215,7 @@ module.exports.replaceLink = (message) => {
                     message.channel.send("L'index fournit n'est pas dans l'anime liste");
                     return;
                 }
-                obj[index].url = replacement;
+                obj[index].link = replacement;
                 json_list = JSON.stringify(obj);
                 fs.writeFile('animelist.json', json_list, 'utf8', err => {
                     if (err) {
