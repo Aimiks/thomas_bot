@@ -3,6 +3,7 @@ const fs = require('fs');
 const Partie = require('../model/Partie.js');
 const ytsearch = require('youtube-search');
 const ytdl = require('ytdl-core');
+const stringSimilarity = require('string-similarity');
 
 
 
@@ -371,10 +372,9 @@ module.exports.privateMessage = (message, Game) => {
         switch (Game.getPlayerSelectMode(message.author.id)) {
             case 1:
             Game.playerHaveResponded(message.author.id);
-                ///formule : ( 1/t*12 ) * 5pts
-                console.log(message.content + " et " + Game.listSongs[Game.curRound].name);
-                
-                if (Game.listSongs[Game.curRound].name.toLowerCase === message.content.toLowerCase) {
+                ///formule : ( 1/t*12 ) * 5pts                 
+                let res = IAAdapt(Game.listSongs[Game.curRound].name.toLowerCase,message.content.toLowerCase);
+                if (res) {
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
                     Game.playerAddScore( message.author.id, ( 1/Game.timerValue*12 ) * 5);
                 }
@@ -448,5 +448,45 @@ module.exports.privateMessage = (message, Game) => {
                 message.author.send("Réponse attendue 1, 2 ou 3");
                 break;
         }
+    }
+}
+
+/**
+ * 
+ * @param {string} rightAnwser 
+ * @param {string} anwser 
+ */
+function IAAdapt(rightAnwser,anwser) {
+    if (rightAnwser.length <= 6 && !rightAnwser.includes(" ")) {
+        return rightAnwser === anwser;
+    }else if (rightAnwser.length <= 6 && rightAnwser.includes(" ")) {
+        let newRightAnwser =  rightAnwser.replace(" ","");
+        let newAnwser = anwser.replace(" ","");
+
+        return newRightAnwser === newAnwser;
+    }
+    else if(rightAnwser.length > 6 && rightAnwser.length <= 12){
+        let newRightAnwser =  rightAnwser.replace(" ","");
+        let newAnwser = anwser.replace(" ","");
+        
+        let coerence = stringSimilarity.compareTwoStrings(newAnwser , newRightAnwser);
+
+        return coerence > 0.8;
+    }
+    else if (rightAnwser.length > 12 && rightAnwser.length <= 20) {
+        let newRightAnwser =  rightAnwser.replace(" ","");
+        let newAnwser = anwser.replace(" ","");
+        
+        let coerence = stringSimilarity.compareTwoStrings(newAnwser , newRightAnwser);
+
+        return coerence > 0.70;
+    }
+    else if (rightAnwser.length > 20) {
+        let newRightAnwser =  rightAnwser.replace(" ","");
+        let newAnwser = anwser.replace(" ","");
+        
+        let coerence = stringSimilarity.compareTwoStrings(newAnwser , newRightAnwser);
+
+        return coerence > 0.55;
     }
 }
