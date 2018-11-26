@@ -1,7 +1,5 @@
-const lewho_TOKEN = 'NTE1NjYwMzQ1MTI2MTU4MzQ3.DtoWGw.V8xlVNyMDL6QohpLvDPJCdAIcwA';
-const mx_TOKEN = 'MzE4Nzc1NDgxNTE0MDY1OTIw.DsecPg.P2ggfh1QZQghQbjDx834n2Z8Plg';
-const TOKEN = mx_TOKEN;
-const YTKEY = 'AIzaSyByJq7Dq91jNOYGESfWC1hjl84Kg-kzZHI';
+const {BOT_TOKEN} = require('./sensitive_infos');
+const {YT_KEY} = require('./sensitive_infos.js');
 
 const Discord = require('discord.js'); // Require the Discord.js library.
 const ytdl = require('ytdl-core');
@@ -18,12 +16,12 @@ var Game = null;
 const client = new Bot();
 client.music.start(client, {
     botPrefix: ">",
-    youtubeKey: YTKEY, // Set the api key used for YouTube.
+    youtubeKey: YT_KEY, // Set the api key used for YouTube.
     cooldown: {
         disabled: true
     }
 });
-client.login(TOKEN);
+client.login(BOT_TOKEN);
 client.on('ready', function () {
     console.log("Je suis connecté !");
 });
@@ -106,7 +104,7 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
 client.on('message', (message) => {
     if (!message.author.bot) {
         if (message.content.startsWith(commands.blindTest.prefix.add)) {
-            commands.blindTest.add(Discord, client, message, YTKEY);
+            commands.blindTest.add(Discord, client, message, YT_KEY);
         } else if (message.content.startsWith(">test")) {
             commands.blindTest.util.unserializeAnimeList( (res) => console.log(res));
         } else if (message.content.startsWith(commands.blindTest.prefix.replace)) {

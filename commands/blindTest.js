@@ -12,7 +12,7 @@ const prefix = {
     replace: '>btreplace ',
     remove: '>btremove '
 }
-exports.prefix = prefix;
+module.exports.prefix = prefix;
 
 /**
  * 
@@ -92,7 +92,7 @@ exports.util = {
  * @param {import('discord.js').Client} client
  * Args = animes... || links...
  */
-exports.add = (Discord, client, message, YTKEY) => {
+module.exports.add = (Discord, client, message, YTKEY) => {
     let bt_queue;
     let args = message.content.split(",");
     // regex to find type
@@ -171,7 +171,7 @@ exports.add = (Discord, client, message, YTKEY) => {
 /**
  * @param {import('discord.js').Message} message
  */
-exports.replaceLink = (message) => {
+module.exports.replaceLink = (message) => {
     // remove an animeLink in the blindTest
     message.content = message.content.substring(prefix.replace.length);
     let args = message.content.split(",");
@@ -226,7 +226,7 @@ exports.replaceLink = (message) => {
 /**
  * @param {import('discord.js').Message} message
  */
-exports.remove = (message) => {
+module.exports.remove = (message) => {
     message.content = message.content.substring(prefix.remove.length);
     if (message === "") {
         message.channel.send(`Nombres d'arguments invalides.\nEx : ${prefix.remove}mirai nikki op1`);
@@ -278,7 +278,7 @@ exports.remove = (message) => {
  * @param {import('discord.js').Message} message
  * @param {Partie} Game
  */
-exports.play = (message, Game) => {
+module.exports.play = (message, Game) => {
     let voiceChannel = message.member.voiceChannel;
 
     try {
@@ -343,7 +343,7 @@ function startNewRound(Game) {
 * @param {Partie} Game 
 * @param {import('discord.js').User[]} mpTable
 */
-exports.privateMessage = (message, Game) => {
+module.exports.privateMessage = (message, Game) => {
     let {started} = Game;
     if (message.author.bot) {
         return;
