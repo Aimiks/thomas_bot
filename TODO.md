@@ -11,4 +11,4 @@
         * 3/6 ready
         * encore 5s avant la fin de la manche
         * classement à la fin avec nb réponses juste
-* **Lancer la musique**
+* ~~**Lancer la musique**~~
