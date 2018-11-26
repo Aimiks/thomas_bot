@@ -70,7 +70,6 @@ class Partie {
     }
     playerHaveResponded(playerID){
         let curPlayer =  this.players.find((p) => p.ID === playerID);
-        console.log(curPlayer.ID);
         curPlayer.hasResponded = true;
         if (this.areAllPlayersHaveResponded()) {
             this.playersHaveResponded = true;

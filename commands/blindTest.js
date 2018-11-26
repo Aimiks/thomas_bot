@@ -114,18 +114,22 @@ module.exports.add = (Discord, client, message, YTKEY) => {
         message.channel.send(`Veuillez renseigner des animes à ajouter.\nEx : ${prefix.add} mirai nikki op1, big order ed1`);
         return;
     }
+    let err = false;
     args.forEach( (arg) => {
         let matches = arg.match(regex);
         if(!matches) {
-            message.channel.send(`:x: ${arg} ne contient aucun type. Chaques anime doit avoir un type (opN, edN, ostN) __**en dernier argument**__.`)
+            message.channel.send(`:x: ${arg} ne contient aucun type. Chaques anime doit avoir un type (opN, edN, ostN) __**en dernier argument**__.`);
+            err = true;
             return;
         }
         types.push(matches[0]);
         names.push(arg.replace(regex,'').trim());
     });
+    if(err) return;
     let opts = {
         maxResults: 1,
-        key: YTKEY
+        key: YTKEY,
+        type: "video"
     };
     // create an array of promise from the yt searcher
     bt_queue = args.map((arg) => ytsearch(arg, opts));
@@ -314,7 +318,7 @@ module.exports.play = (message, Game) => {
             Game.listAllSongs.push(res[i]);
         }
         for (let index = 0; index < Game.noRounds; index++) {           
-            let rng = Math.round(Math.random() * res.length);
+            let rng = Math.floor(Math.random() * res.length);
             console.log(rng);
             Game.listSongs.push(res[rng]);     
         }
@@ -327,6 +331,9 @@ module.exports.play = (message, Game) => {
  * @param {Partie} Game 
  */
 function startNewRound(Game) {
+    console.log("======================");
+    console.log("Round n°" + Game.curRound);
+    console.log("======================");
     Game.mpTable.forEach(e => {
         e.send("La Prochaine Manche va commencer");
         e.send("Choisi\n1: Reponse Ouverte\n2: 4 Propositions\n3: 2 Propositions\n");
@@ -334,6 +341,7 @@ function startNewRound(Game) {
     // play song
     let streamOptions = { seek: 0, volume: 1 };
     let stream = ytdl(Game.getCurrentRoundAnime().link, { filter: 'audioonly' });
+    // TODO : fix bug bot parle h24 et pas de musiques
     Game.connection.playStream(stream, streamOptions);
 
     // clear en start timer
@@ -342,7 +350,8 @@ function startNewRound(Game) {
     Game.timerId = setInterval(() => {
         Game.timerValue+=0.01;
     }, 10);
-    
+
+
 
 }
 /**
@@ -364,7 +373,7 @@ module.exports.privateMessage = (message, Game) => {
                 startNewRound(Game);
             }
             return;
-        } else if (!started && !message.content.search(regex) >= 0) {
+        } else if (!started && (!message.content.search(regex) >= 0)) {
             message.author.send("Vous devez répondre [y]es/[o]ui");
             return;
         }
@@ -379,10 +388,12 @@ module.exports.privateMessage = (message, Game) => {
             case 1:
             Game.playerHaveResponded(message.author.id);
                 ///formule : ( 1/t*12 ) * 5pts                 
-                let res = IAAdapt(Game.listSongs[Game.curRound].name.toLowerCase,message.content.toLowerCase);
+                let res = IAAdapt(Game.listSongs[Game.curRound].name,message.content);
                 if (res) {
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
+                    console.log(`\x1b[33m${message.author.username}\x1b[0m a trouvé \x1b[33m${Game.listSongs[Game.curRound].name}\x1b[0m !`);
                     Game.playerAddScore( message.author.id, ( 1/Game.timerValue*12 ) * 5);
+                    message.author.send(`:tada: Tu as trouvé la bonne réponse ! :tada:`);
                 }
                 break;
             case 2:
@@ -405,7 +416,7 @@ module.exports.privateMessage = (message, Game) => {
         console.log("Timer value : " + Game.timerValue);
         console.log(`${message.author.username} a ${Game.getPlayerScore(message.author.id)} points de score`);
 
-        message.author.send("Le bonne reponse etait " + Game.listSongs[Game.curRound].name + " " + Game.listSongs[Game.curRound].link);
+        message.author.send("Le bonne reponse était " + toTitleCase(Game.listSongs[Game.curRound].name) + " " + Game.listSongs[Game.curRound].link);
 
         if (Game.playersHaveResponded) {
             Game.reset();
@@ -442,12 +453,12 @@ module.exports.privateMessage = (message, Game) => {
             case "2":
             let temptab1 = Game.getCarre();
 
-                message.author.send(":one: "+temptab1[0]+"\n:two: "+temptab1[1]+"\n:three: "+temptab1[2]+"\n:four: "+temptab1[3]);
+                message.author.send(":one: "+toTitleCase(temptab1[0])+"\n:two: "+toTitleCase(temptab1[1])+"\n:three: "+toTitleCase(temptab1[2])+"\n:four: "+toTitleCase(temptab1[3]));
                 Game.setPlayerSelectMode(message.author.id, 2);
                 break;
             case "3":
             let temptab2 = Game.getDuo();            
-                message.author.send(":one: "+temptab2[0]+"\n:two: "+temptab2[1]);
+                message.author.send(":one: "+toTitleCase(temptab2[0])+"\n:two: "+toTitleCase(temptab2[1]));
                 Game.setPlayerSelectMode(message.author.id, 3);
                 break;
             default:
@@ -465,17 +476,26 @@ module.exports.privateMessage = (message, Game) => {
 function IAAdapt(rightAnwser,anwser) {
     let newRightAnwser =  rightAnwser.replace(" ","");
     let newAnwser = anwser.replace(" ","");
-    let coerence = stringSimilarity.compareTwoStrings(newAnwser , newRightAnwser);
+    let coherence = stringSimilarity.compareTwoStrings(newAnwser , newRightAnwser);
 
     if (rightAnwser.length <= 6) {
         return rightAnwser === anwser;
     }else if(rightAnwser.length > 6 && rightAnwser.length <= 12){       
-        return coerence > 0.8;
+        return coherence > 0.8;
     }
     else if (rightAnwser.length > 12 && rightAnwser.length <= 20) {
-        return coerence > 0.70;
+        return coherence > 0.70;
     }
     else if (rightAnwser.length > 20) {
-        return coerence > 0.55;
+        return coherence > 0.55;
     }
+}
+/**
+ * 
+ * @param {String} str 
+ */
+function toTitleCase(str) {
+    return str.replace(/\w\S*/g, function(txt){
+        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
 }

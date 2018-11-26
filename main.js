@@ -53,8 +53,6 @@ client.on('message', (message) => {
         dispatcher.resume();
     }else if(message.content.startsWith('>switchOnL ')){
         let arg = message.content.split(' ')[1];
-        let link = arg.split('&')[0]; // remove extra parameters from yt
-
         streamOptions = { seek: 0, volume: 1 };
         stream = ytdl(link, { filter: 'audioonly' });
         dispatcher = conn.playStream(stream, streamOptions);
@@ -68,11 +66,18 @@ client.on('message', (message) => {
     message.content = message.content.toLowerCase();
     /** PRIVATE MESSAGE */
     if(message.guild === null) {
+        
+        /** ANSWER TO PRIVATE MESSAGE WHILE IN GAME */
         if ( Game !== null){        
             if (Game.mpTable.includes(message.author)) {
                 commands.blindTest.privateMessage(message,Game);
             }
-        }
+        } 
+        /** TEST ROLL */
+        if ( message.content.startsWith(">roll")) {
+            //seedrandom("27");
+            message.author.send(Math.random());
+        } 
   
     } 
     /** NO PRIVATE MESSAGE */  
@@ -99,12 +104,6 @@ client.on('message', (message) => {
         }
 
         /** TEST COMMANDS */
-
-        /** ROLL TEST RANDOM */
-        else if (message.guild === null && message.content.startsWith(">roll")) {
-            //seedrandom("27");
-            message.author.send(Math.random());
-        } 
         /** TEST UNSERIALIZE */
         else if (message.content.startsWith(">test")) {
             commands.blindTest.util.unserializeAnimeList( (res) => console.log(res));
