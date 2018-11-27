@@ -401,8 +401,17 @@ module.exports.privateMessage = (message, Game, client) => {
                 startNewRound(Game,client);
             }
             return;
+        } else if(message.content.search(/(^no$)|(^n$)|(^nn$)|(^non$)/)>=0) {
+            message.author.send("Vous ne faites donc pas partie du jeu. :wave:");
+            Game.mpTable = Game.mpTable.filter( (s) => s!=message.author);
+            // stop the game if no one play
+            if(Game.mpTable.length ===0 ) {
+                Game.started = false;
+                Game.voiceChannel.leave();
+                client.user.setActivity("");
+            }
         } else {
-            message.author.send("Vous devez répondre [y]es/[o]ui");
+            message.author.send("Vous devez répondre [y]es/[n]o");
             return;
         }
     }
@@ -519,6 +528,7 @@ module.exports.privateMessage = (message, Game, client) => {
                 });
                 Game.started = false;
                 Game.voiceChannel.leave();
+                client.user.setActivity("");
                 return;
                 
             }else{

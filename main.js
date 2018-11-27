@@ -63,6 +63,7 @@ client.on('message', (message) => {
 
 client.on('message', (message) => {
     if (message.author.bot) {return;}
+    let noLowerCaseMessage = message.content;
     message.content = message.content.toLowerCase();
     /** PRIVATE MESSAGE */
     if(message.guild === null) {
@@ -89,6 +90,7 @@ client.on('message', (message) => {
             Game = new Partie(noRounds, seed);
             Game.started = true;
             commands.blindTest.play(message, Game);
+            client.user.setActivity("BlindTest Anime", {type:"PLAYING"});
         } 
         /** ADD TO BLINDTEST */
         else if (message.content.startsWith(commands.blindTest.prefix.add)) {
@@ -96,6 +98,7 @@ client.on('message', (message) => {
         } 
         /** REPLACE ANIME SONG LINK IN BLINDTEST  */
         else if (message.content.startsWith(commands.blindTest.prefix.replace)) {
+            message.content = noLowerCaseMessage;
             commands.blindTest.replaceLink(message);
         } 
         /** REMOVE ANIME IN BLINDTEST */

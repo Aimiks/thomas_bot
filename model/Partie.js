@@ -27,6 +27,7 @@ class Partie {
         this.carreSol = null;
         this.timerValue = 0;
         this.timerId = null; 
+        /** @type {String[]} */
         this.mpTable = [];
         this.started = false;
         /** @type {import('discord.js').VoiceConnection} */
