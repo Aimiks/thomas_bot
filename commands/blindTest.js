@@ -350,7 +350,7 @@ function startNewRound(Game, client) {
             color: client.resolver.resolveColor('RANDOM')
         }
         let embed_choices = new Discord.RichEmbed(opts_embed);
-        embed_choices.addField(`:one: Réponse ouverte :dollar:`, "Vous devrez répondre par le nom de l'anime !");
+        embed_choices.addField(`Tapez directement votre réponse ouverte :dollar:`, "Vous devrez répondre par le nom de l'anime !");
         embed_choices.addField(`:two: 4 propositions :capital_abcd:`, "Vous choisirez votre réponse parmis 4 propositions !");
         embed_choices.addField(`:three: 2 propositions :wheelchair:`, "Vous choisirez votre réponse parmis 2 propositions !");
 
@@ -415,7 +415,7 @@ module.exports.privateMessage = (message, Game, client) => {
             return;
         }
     }
-    if (Game.getPlayerSelectModeState(message.author.id)) {     
+    if (Game.getPlayerSelectModeState(message.author.id) || (message.content.length >= 3 && message.content.replace(/[^a-z]/,"").length!=0)) {     
         let replied_number = -1;
         message.content = message.content.trim();
         if(!isNaN(message.content)) {
