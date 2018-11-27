@@ -7,7 +7,7 @@ class Player{
         this.isModeSelected = false;
         this.hasResponded = false;
         this.score = 0;
-        this.modeType = -1;
+        this.modeType = 1;
         this.bestScore = 0;
         this.bestSong = "";
     }
@@ -15,7 +15,7 @@ class Player{
     reset(){
         this.isModeSelected = false;
         this.hasResponded = false;
-        this.modeType = -1;
+        this.modeType = 1;
     }
     updateBestScore(score,song, time){
         if (score > this.bestScore) {
