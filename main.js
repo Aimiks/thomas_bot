@@ -70,7 +70,7 @@ client.on('message', (message) => {
         /** ANSWER TO PRIVATE MESSAGE WHILE IN GAME */
         if ( Game !== null){        
             if (Game.mpTable.includes(message.author)) {
-                commands.blindTest.privateMessage(message,Game);
+                commands.blindTest.privateMessage(message,Game, client);
             }
         } 
         /** TEST ROLL */
@@ -92,7 +92,7 @@ client.on('message', (message) => {
         } 
         /** ADD TO BLINDTEST */
         else if (message.content.startsWith(commands.blindTest.prefix.add)) {
-            commands.blindTest.add(Discord, client, message, YT_KEY);
+            commands.blindTest.add(client, message, YT_KEY);
         } 
         /** REPLACE ANIME SONG LINK IN BLINDTEST  */
         else if (message.content.startsWith(commands.blindTest.prefix.replace)) {

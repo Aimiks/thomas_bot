@@ -5,6 +5,8 @@ const Player = require('../model/Player.js');
 const ytsearch = require('youtube-search');
 const ytdl = require('ytdl-core');
 const stringSimilarity = require('string-similarity');
+const Discord = require('discord.js'); // Require the Discord.js library.
+
 
 
 
@@ -99,7 +101,7 @@ exports.util = {
  * @param {import('discord.js').Client} client
  * Args = animes... || links...
  */
-module.exports.add = (Discord, client, message, YTKEY) => {
+module.exports.add = (client, message, YTKEY) => {
     let bt_queue;
     let args = message.content.split(",");
     // regex to find type
@@ -304,7 +306,7 @@ module.exports.play = (message, Game) => {
                 Game.connection = connection;
                 Game.voiceChannel = voiceChannel;
                 Game.mpTable.push(element.user);
-                Game.addPlayer(element.id,element.user.username);
+                Game.addPlayer(element.user);
                 element.send(":crab: Hi ready to play ? :crab: (yes/no)");
             }
 
@@ -335,26 +337,46 @@ module.exports.play = (message, Game) => {
  * @param {String[]} mpTable 
  * @param {Partie} Game 
  */
-function startNewRound(Game) {
+function startNewRound(Game, client) {
     console.log("======================");
     console.log("Round n°" + Game.curRound);
     console.log("======================");
+    let queue_promises = [];
     Game.mpTable.forEach(e => {
-        e.send("La Prochaine Manche va commencer");
-        e.send("Choisi\n1: Reponse Ouverte\n2: 4 Propositions\n3: 2 Propositions\n");
-    });
-    // play song
-    let streamOptions = { seek: 0, volume: 1 };
-    let stream = ytdl(Game.getCurrentRoundAnime().link, { filter: 'audioonly' });
-    // TODO : fix bug bot parle h24 et pas de musiques
-    Game.connection.playStream(stream, streamOptions);
+        e.send(`:new: La manche n°**${Game.curRound}** va commencer ! **Préparez vous**`);
+        let opts_embed = {
+            title: ` Faites votre choix !`,
+            description: ``,
+            color: client.resolver.resolveColor('RANDOM')
+        }
+        let embed_choices = new Discord.RichEmbed(opts_embed);
+        embed_choices.addField(`:one: Réponse ouverte :dollar:`, "Vous devrez répondre par le nom de l'anime !");
+        embed_choices.addField(`:two: 4 propositions :capital_abcd:`, "Vous choisirez votre réponse parmis 4 propositions !");
+        embed_choices.addField(`:three: 2 propositions :wheelchair:`, "Vous choisirez votre réponse parmis 2 propositions !");
 
-    // clear en start timer
-    if(Game.timerId) clearInterval(Game.timerId);
-    Game.timerValue = 0;
-    Game.timerId = setInterval(() => {
-        Game.timerValue+=0.01;
-    }, 10);
+        queue_promises.push(e.send(embed_choices));
+    });
+    // stop timer and and curr stream
+    if(Game.timerId && Game.currStream) {
+        if(Game.timerId) clearInterval(Game.timerId);
+        Game.currStream.end();
+    }
+
+    // wait that every ppl got the message
+    Promise.all(queue_promises).then( () => {
+        // play song
+        let streamOptions = { seek: 0, volume: 1 };
+        let stream = ytdl(Game.getCurrentRoundAnime().link, { filter: 'audioonly' });
+        Game.currStream = Game.connection.playStream(stream, streamOptions);
+        Game.currStream.setBitrate(30000);
+
+        //start timer
+        
+        Game.timerId = setInterval(() => {
+            Game.timerValue=(Game.currStream.time)/1000;
+        }, 50);
+    });
+
 
 
 
@@ -364,28 +386,22 @@ function startNewRound(Game) {
 * @param {Partie} Game 
 * @param {import('discord.js').User[]} mpTable
 */
-module.exports.privateMessage = (message, Game) => {
+module.exports.privateMessage = (message, Game, client) => {
     let {started} = Game;
     if (message.author.bot) {
         return;
     }
     let regex = /(^ok$)|(^oui$)|(^o$)|(^yes$)|(^y$)|(^go$)/gmi;
     if (!Game.areAllPlayersReady()) {
-        let NIQUETOIFDP = false;
-        if (started) {
-            if (!(message.content.search(regex) >= 0)) {               
-                NIQUETOIFDP = true;
-            }
-        }
 
         if (message.content.search(regex) >= 0) {
             Game.playerReady(message.author.id);
 
             if (Game.areAllPlayersReady()) {
-                startNewRound(Game);
+                startNewRound(Game,client);
             }
             return;
-        }else if (NIQUETOIFDP) {
+        } else {
             message.author.send("Vous devez répondre [y]es/[o]ui");
             return;
         }
@@ -407,12 +423,12 @@ module.exports.privateMessage = (message, Game) => {
                     if (Game.firstToFindCash) {
                         Game.firstToFindCash = false;
                         Game.mpTable.forEach(e => {
-                            e.send(`:clap::clap: ${message.author.username} a trouver la repose en premier en ${Game.timerValue.toFixed(1)}s dans le mode reponse ouverte ! :clap::clap:`);
+                            e.send(`:dollar: __${message.author.username}__ a trouvé la réponse en premier en **${Game.timerValue.toFixed(1)}s** dans le mode réponse ouverte ! :dollar:`);
                         });
                     }
                     let sc = ( 1/Game.timerValue*12 ) * 5;
                     Game.playerAddScore( message.author.id, sc);
-                    Game.updatePlayerBestScore(message.author.id, sc, Game.listSongs[Game.curRound].name);
+                    Game.updatePlayerBestScore(message.author.id, sc, Game.listSongs[Game.curRound].name, Game.timerValue.toFixed(1));
                     message.author.send(`:tada: Tu as trouvé la bonne réponse ! :tada:`);
                 }
                 break;
@@ -423,11 +439,11 @@ module.exports.privateMessage = (message, Game) => {
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
                     let sc = (1/Game.timerValue*8) * 3;
                     Game.playerAddScore(message.author.id, sc);
-                    Game.updatePlayerBestScore(message.author.id, sc, Game.listSongs[Game.curRound].name);
+                    Game.updatePlayerBestScore(message.author.id, sc, Game.listSongs[Game.curRound].name, Game.timerValue.toFixed(1));
                     if (Game.firstToFindCarre) {
                         Game.firstToFindCarre = false;
                         Game.mpTable.forEach(e => {
-                            e.send(`:thumbsup::thumbsup: ${message.author.username} a trouver la repose en premier en ${Game.timerValue.toFixed(1)}s dans le mode 4 prositions ! :thumbsup::thumbsup:`);
+                            e.send(`:capital_abcd: __${message.author.username}__ a trouvé la réponse en premier en **${Game.timerValue.toFixed(1)}s** dans le mode 4 propositions ! :capital_abcd: `);
                         });
                     }
                 }
@@ -439,12 +455,12 @@ module.exports.privateMessage = (message, Game) => {
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
                     let sc = 1/Game.timerValue*2+1
                     Game.playerAddScore( message.author.id ,sc);
-                    Game.updatePlayerBestScore(message.author.id , sc,Game.listSongs[Game.curRound].name);
+                    Game.updatePlayerBestScore(message.author.id , sc,Game.listSongs[Game.curRound].name, Game.timerValue.toFixed(1));
 
                     if (Game.firstToFindCarre) {
                         Game.firstToFindCarre = false;
                         Game.mpTable.forEach(e => {
-                            e.send(`:middle_finger::middle_finger: ${message.author.username} a trouver la repose en premier en ${Game.timerValue.toFixed(1)}s dans le mode 2 prositions ! :middle_finger::middle_finger:`);
+                            e.send(`:wheelchair: ${message.author.username} a trouvé la réponse en premier en ${Game.timerValue.toFixed(1)}s dans le mode 2 propositions ! :wheelchair:`);
                         });
                     }
                 }
@@ -452,8 +468,18 @@ module.exports.privateMessage = (message, Game) => {
         }
         console.log("Timer value : " + Game.timerValue);
         console.log(`${message.author.username} a ${Game.getPlayerScore(message.author.id)} points de score`);
+        let curr_anime = Game.listSongs[Game.curRound];
+        let opts_embed = {
+            title: `:o: La bonne réponse était`,
+            color: client.resolver.resolveColor('RANDOM')
+        }
+        let embed_answer = new Discord.RichEmbed(opts_embed);
+        embed_answer.addField(":label: Nom de l'anime", `[${toTitleCase(curr_anime.name)}](${curr_anime.link})`);
+        embed_answer.addField(":musical_note: Type de la musique", curr_anime.type);
 
-        message.author.send("Le bonne reponse était " + toTitleCase(Game.listSongs[Game.curRound].name) + " " + Game.listSongs[Game.curRound].link);
+        embed_answer.setThumbnail(`http://i3.ytimg.com/vi/${new URL(curr_anime.link).searchParams.get("v")}/0.jpg`);
+
+        message.author.send(embed_answer);
 
         if (Game.playersHaveResponded) {
             Game.reset();
@@ -465,18 +491,31 @@ module.exports.privateMessage = (message, Game) => {
                 Game.mpTable = [];
                 /**@type {Player[]} */
                 let finalBoard = Game.getEndBoardResult();
+                let opts_embed = {
+                    title: `:headphones: Le blind test est finit !`,
+                    description: `Le seed de la partie était : ${Game.ID}`,
+                    color: client.resolver.resolveColor('RANDOM')
+                }
+                let final_embed_message = new Discord.RichEmbed(opts_embed);
+                final_embed_message.setThumbnail(Game.getPlayerUser(idWinner).avatarURL);
+                let emojis = [":trophy:", ":second_place:", ":third_place:", ":slight_smile:", ":slight_smile:", ":neutral_face:",":neutral_face:",":neutral_face:",":neutral_face:",":neutral_face:"];
+                let default_emoji = ":worried:";
+                emojis = emojis.fill(default_emoji,10,25);
+                final_embed_message.addField(`:trophy: **${nameWinner}** :trophy:`, `**Score** : __${scoreWinner.toFixed(2)}__ :small_orange_diamond:\n**Meilleur score** : __${finalBoard[0].bestScore.toFixed(2)}__ sur __${finalBoard[0].bestSong}__ trouvé en ${finalBoard[0].time} secondes`);
+                for (let index = 1; index < finalBoard.length && index < 24; index++) {
+                    let stats='';
+                    if(index < 6) {
+                        stats=`\n**Meilleur score** : __${finalBoard[index].bestScore.toFixed(2)}__ sur __${finalBoard[index].bestSong}__ trouvé en ${finalBoard[index].time} secondes`;
+                    }
+                    if(index===23) {
+                        final_embed_message.addField("...", "...");
+                    } else {
+                        final_embed_message.addField(`${emojis[index]} ${finalBoard[index].username}`, `Score : __${finalBoard[index].score.toFixed(2)}__ :small_orange_diamond:${stats}`,true);
+                    }
+                }
 
                 mptabtemp.forEach(e => {
-                    e.send(`:headphones: Le blind test est finit !\n`);
-                    let resteDuTableau = [];
-                    for (let index = 0; index < finalBoard.length; index++) {
-                        if (index == 0) {
-                            resteDuTableau.push(`:first_place: Le 1er est __${nameWinner}__ avec **${scoreWinner.toFixed(2)}** de score. Son Meilleur score etait sur ${finalBoard[0].bestSong} avec **${finalBoard[0].bestScore.toFixed(2)}**.`);
-                        }else{
-                            resteDuTableau.push(`Le ${index+1}eme est __${finalBoard[index].username}__ avec **${finalBoard[index].score.toFixed(2)}** de score. Son Meilleur score etait sur ${finalBoard[index].bestSong} avec **${finalBoard[index].bestScore.toFixed(2)}**.\n`);
-                        }
-                    }
-                    e.send(resteDuTableau);               
+                    e.send(final_embed_message);               
                 });
                 Game.started = false;
                 Game.voiceChannel.leave();
@@ -484,10 +523,10 @@ module.exports.privateMessage = (message, Game) => {
                 
             }else{
                 Game.curRound++;
-                startNewRound(Game);
+                startNewRound(Game,client);
             }
         }else{
-            message.author.send("En attente des autres joueurs.... ");
+            message.author.send(":hourglass_flowing_sand: En attente des autres joueurs.... ");
         }
         
 

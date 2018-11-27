@@ -11,6 +11,8 @@
 * propositions uniques
 * replace était buggé et ajouté un .url, faire un script pour que si y'a un .url cela devient le .link
 * pour le replace, pas de lower case
+* réponse ouverte auto
+* aliases
 
 
 # TRUCS FINI

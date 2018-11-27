@@ -8,7 +8,7 @@ class Partie {
         this.noRounds = noRounds;
         this.curRound = 0;
         if (ID === null) {
-            this.ID = Math.random() * 1000000;
+            this.ID = (Math.random() * 1000000).toString();
         }else{
             this.ID = ID
         }
@@ -31,6 +31,8 @@ class Partie {
         this.started = false;
         /** @type {import('discord.js').VoiceConnection} */
         this.connection = null;
+        /** @type {import('discord.js').StreamDispatcher} */
+        this.currStream = null;
         /** @type {import('discord.js').VoiceChannel} */
         this.voiceChannel = null;
         this.firstToFindCash = true;
@@ -38,8 +40,8 @@ class Partie {
         this.firstToFindDouble = true;
     }
 
-    addPlayer(playerID,username) {
-        this.players.push(new Player(playerID,username));
+    addPlayer(user) {
+        this.players.push(new Player(user));
     }
 
     areAllPlayersReady(){
@@ -160,6 +162,15 @@ class Partie {
         let curPlayer =  this.players.find((p) => p.ID === playerID);
         return curPlayer.username;
     }
+    /**
+     * 
+     * @param {*} playerID 
+     * @return {import('discord.js').User}
+     */
+    getPlayerUser(playerID) {
+        let curPlayer =  this.players.find((p) => p.ID === playerID);
+        return curPlayer.user;
+    }
 
     getBestPlayerScore() {
         let best = this.players[0];
@@ -178,10 +189,10 @@ class Partie {
         return this.listSongs[this.curRound];
     }
 
-    updatePlayerBestScore(playerID,score,song) {
+    updatePlayerBestScore(playerID,score,song, time) {
         let curPlayer =  this.players.find((p) => p.ID === playerID);
         
-        curPlayer.updateBestScore(score,song);
+        curPlayer.updateBestScore(score,song, time);
     }
 
     getEndBoardResult(){
