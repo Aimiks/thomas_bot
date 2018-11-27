@@ -108,7 +108,7 @@ class Partie {
                     let rng;
                     do {
                     rng = Math.floor(Math.random()*this.listAllSongs.length);
-                    } while ( tab1.includes(this.listSongs[this.curRound].name) || tab1.includes(this.listAllSongs[rng].name) );                       
+                    } while ( tab1.includes(this.listAllSongs[rng].name) || (this.listSongs[this.curRound].name ===  this.listAllSongs[rng].name));                       
                     tab1[index] = this.listAllSongs[rng].name;
                 }
             }
@@ -132,9 +132,8 @@ class Partie {
                     let rng;
                     do {
                     rng = Math.floor(Math.random()*this.listAllSongs.length);
-                    console.log("allow ?");
                     
-                    } while ( tab2.includes(this.listSongs[this.curRound].name) || tab2.includes(this.listAllSongs[rng].name) );
+                    } while (tab2.includes(this.listAllSongs[rng].name) || (this.listSongs[this.curRound].name ===  this.listAllSongs[rng].name) );
 
                     tab2[index] = this.listAllSongs[rng].name;
                 }
