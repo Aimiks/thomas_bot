@@ -463,12 +463,16 @@ module.exports.privateMessage = (message, Game) => {
                 let finalBoard = Game.getEndBoardResult();
 
                 mptabtemp.forEach(e => {
-                    e.send(`:headphones: Le blind test est finit !\n
-                    :first_place: Le 1er est __${nameWinner}__ avec **${scoreWinner.toFixed(2)}** de score.`);
+                    e.send(`:headphones: Le blind test est finit !\n`);
                     let resteDuTableau = [];
-                    for (let index = 1; index < finalBoard.length; index++) {
-                        resteDuTableau.push(`Le ${index+1}eme est __${finalBoard[index].username}__ avec **${finalBoard[index].score.toFixed(2)}** de score.\n`)
-                    }                    
+                    for (let index = 0; index < finalBoard.length; index++) {
+                        if (index == 0) {
+                            resteDuTableau.push(`:first_place: Le 1er est __${nameWinner}__ avec **${scoreWinner.toFixed(2)}** de score. Son Meilleur score etait sur ${finalBoard[0].bestSong} avec **${finalBoard[0].bestScore.toFixed(2)}**.`);
+                        }else{
+                            resteDuTableau.push(`Le ${index+1}eme est __${finalBoard[index].username}__ avec **${finalBoard[index].score.toFixed(2)}** de score. Son Meilleur score etait sur ${finalBoard[index].bestSong} avec **${finalBoard[index].bestScore.toFixed(2)}**.\n`);
+                        }
+                    }
+                    e.send(resteDuTableau);               
                 });
                 Game.started = false;
                 Game.voiceChannel.leave();
@@ -517,13 +521,13 @@ function IAAdapt(rightAnwser,anwser) {
     let newRightAnwser =  rightAnwser.replace(" ","");
     let newAnwser = anwser.replace(" ","");
 
-    let newRightAnwser =  newRightAnwser.replace(/,|;|:|\.|-|_|"|'|&|#|\*|\$|%|\^|\?/,"");
-    let newAnwser = newAnwser.replace(/,|;|:|\.|-|_|"|'|&|#|\*|\$|%|\^|\?/,"");
+    newRightAnwser =  newRightAnwser.replace(/[^a-z]/gmi,"");
+    newAnwser = newAnwser.replace(/[^a-z]/gmi,"");
 
     let coherence = stringSimilarity.compareTwoStrings(newAnwser , newRightAnwser);
 
     if (rightAnwser.length <= 6) {
-        return rightAnwser === anwser;
+        return newRightAnwser === newAnwser;
     }else if(rightAnwser.length > 6 && rightAnwser.length <= 12){       
         return coherence > 0.8;
     }

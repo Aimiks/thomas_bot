@@ -179,12 +179,13 @@ class Partie {
         let resTab = [];
 
         this.players.forEach(e => {
-            resTab.push(e.score);
+            resTab.push(e);
         });
 
         resTab.sort((a,b) => {
-            return b-a;
+            return b.score-a.score;
         });
+        
         return resTab;
     }
     
