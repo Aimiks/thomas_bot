@@ -1,6 +1,7 @@
 const Anime = require('../model/Anime.js');
 const fs = require('fs');
 const Partie = require('../model/Partie.js');
+const Player = require('../model/Player.js');
 const ytsearch = require('youtube-search');
 const ytdl = require('ytdl-core');
 const stringSimilarity = require('string-similarity');
@@ -366,6 +367,13 @@ module.exports.privateMessage = (message, Game) => {
     }
     let regex = /(^ok$)|(^oui$)|(^o$)|(^yes$)|(^y$)|(^go$)/gmi;
     if (!Game.areAllPlayersReady()) {
+        let NIQUETOIFDP = false;
+        if (started) {
+            if (!(message.content.search(regex) >= 0)) {               
+                NIQUETOIFDP = true;
+            }
+        }
+
         if (message.content.search(regex) >= 0) {
             Game.playerReady(message.author.id);
 
@@ -373,7 +381,7 @@ module.exports.privateMessage = (message, Game) => {
                 startNewRound(Game);
             }
             return;
-        } else if (!started && (!message.content.search(regex) >= 0)) {
+        }else if (NIQUETOIFDP) {
             message.author.send("Vous devez répondre [y]es/[o]ui");
             return;
         }
@@ -392,7 +400,15 @@ module.exports.privateMessage = (message, Game) => {
                 if (res) {
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
                     console.log(`\x1b[33m${message.author.username}\x1b[0m a trouvé \x1b[33m${Game.listSongs[Game.curRound].name}\x1b[0m !`);
-                    Game.playerAddScore( message.author.id, ( 1/Game.timerValue*12 ) * 5);
+                    if (Game.firstToFindCash) {
+                        Game.firstToFindCash = false;
+                        Game.mpTable.forEach(e => {
+                            e.send(`:clap::clap: ${message.author.username} a trouver la repose en premier en ${Game.timerValue.toFixed(1)}s dans le mode reponse ouverte ! :clap::clap:`);
+                        });
+                    }
+                    let sc = ( 1/Game.timerValue*12 ) * 5;
+                    Game.playerAddScore( message.author.id, sc);
+                    Game.updatePlayerBestScore(message.author.id, sc, Game.listSongs[Game.curRound].name);
                     message.author.send(`:tada: Tu as trouvé la bonne réponse ! :tada:`);
                 }
                 break;
@@ -401,7 +417,15 @@ module.exports.privateMessage = (message, Game) => {
                 ///formule : (1/t*8) * 3 pts
                 if (replied_number === Game.carreSol) {
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
-                    Game.playerAddScore( message.author.id, (1/Game.timerValue*8) * 3);
+                    let sc = (1/Game.timerValue*8) * 3;
+                    Game.playerAddScore(message.author.id, sc);
+                    Game.updatePlayerBestScore(message.author.id, sc, Game.listSongs[Game.curRound].name);
+                    if (Game.firstToFindCarre) {
+                        Game.firstToFindCarre = false;
+                        Game.mpTable.forEach(e => {
+                            e.send(`:thumbsup::thumbsup: ${message.author.username} a trouver la repose en premier en ${Game.timerValue.toFixed(1)}s dans le mode 4 prositions ! :thumbsup::thumbsup:`);
+                        });
+                    }
                 }
                 break;
             case 3:
@@ -409,7 +433,16 @@ module.exports.privateMessage = (message, Game) => {
                 ///Formule : 1/t*2+1
                 if (replied_number === Game.duoSol) {
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
-                    Game.playerAddScore( message.author.id ,1/Game.timerValue*2+1);
+                    let sc = 1/Game.timerValue*2+1
+                    Game.playerAddScore( message.author.id ,sc);
+                    Game.updatePlayerBestScore(message.author.id , sc,Game.listSongs[Game.curRound].name);
+
+                    if (Game.firstToFindCarre) {
+                        Game.firstToFindCarre = false;
+                        Game.mpTable.forEach(e => {
+                            e.send(`:middle_finger::middle_finger: ${message.author.username} a trouver la repose en premier en ${Game.timerValue.toFixed(1)}s dans le mode 2 prositions ! :middle_finger::middle_finger:`);
+                        });
+                    }
                 }
                 break;
         }
@@ -426,9 +459,16 @@ module.exports.privateMessage = (message, Game) => {
                 let scoreWinner = Game.getPlayerScore(idWinner);
                 let mptabtemp = Game.mpTable.slice();
                 Game.mpTable = [];
+                /**@type {Player[]} */
+                let finalBoard = Game.getEndBoardResult();
 
                 mptabtemp.forEach(e => {
-                    e.send(`:headphones: Le blind test est finit !\n:first_place: Le gagnant est __${nameWinner}__ avec **${scoreWinner.toFixed(2)}** de score. :crab: :ok_woman:`);
+                    e.send(`:headphones: Le blind test est finit !\n
+                    :first_place: Le 1er est __${nameWinner}__ avec **${scoreWinner.toFixed(2)}** de score.`);
+                    let resteDuTableau = [];
+                    for (let index = 1; index < finalBoard.length; index++) {
+                        resteDuTableau.push(`Le ${index+1}eme est __${finalBoard[index].username}__ avec **${finalBoard[index].score.toFixed(2)}** de score.\n`)
+                    }                    
                 });
                 Game.started = false;
                 Game.voiceChannel.leave();
@@ -476,6 +516,10 @@ module.exports.privateMessage = (message, Game) => {
 function IAAdapt(rightAnwser,anwser) {
     let newRightAnwser =  rightAnwser.replace(" ","");
     let newAnwser = anwser.replace(" ","");
+
+    let newRightAnwser =  newRightAnwser.replace(/,|;|:|\.|-|_|"|'|&|#|\*|\$|%|\^|\?/,"");
+    let newAnwser = newAnwser.replace(/,|;|:|\.|-|_|"|'|&|#|\*|\$|%|\^|\?/,"");
+
     let coherence = stringSimilarity.compareTwoStrings(newAnwser , newRightAnwser);
 
     if (rightAnwser.length <= 6) {

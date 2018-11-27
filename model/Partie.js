@@ -13,6 +13,7 @@ class Partie {
             this.ID = ID
         }
         var rng = Math.seedrandom(this.ID);
+        /**@type {Player[] } */
         this.players = [];
         /** @type {import('./Anime')[]}*/
         this.listAllSongs = [];
@@ -32,6 +33,9 @@ class Partie {
         this.connection = null;
         /** @type {import('discord.js').VoiceChannel} */
         this.voiceChannel = null;
+        this.firstToFindCash = true;
+        this.firstToFindCarre = true;
+        this.firstToFindDouble = true;
     }
 
     addPlayer(playerID,username) {
@@ -87,6 +91,9 @@ class Partie {
         this.playersHaveResponded = false;
         this.duo = null;
         this.carre = null;
+        this.firstToFindCash = true;
+        this.firstToFindCarre = true;
+        this.firstToFindDouble = true;
     }
 
     getDuo(){
@@ -160,6 +167,25 @@ class Partie {
      */
     getCurrentRoundAnime() {
         return this.listSongs[this.curRound];
+    }
+
+    updatePlayerBestScore(playerID,score,song) {
+        let curPlayer =  this.players.find((p) => p.ID === playerID);
+        
+        curPlayer.updateBestScore(score,song);
+    }
+
+    getEndBoardResult(){
+        let resTab = [];
+
+        this.players.forEach(e => {
+            resTab.push(e.score);
+        });
+
+        resTab.sort((a,b) => {
+            return b-a;
+        });
+        return resTab;
     }
     
 };
