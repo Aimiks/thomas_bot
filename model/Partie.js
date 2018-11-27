@@ -105,7 +105,10 @@ class Partie {
                 if (index === theId) {
                     tab1[index] = this.listSongs[this.curRound].name;
                 }else{
-                    let rng = Math.floor(Math.random()*this.listAllSongs.length);                        
+                    let rng;
+                    do {
+                    rng = Math.floor(Math.random()*this.listAllSongs.length);
+                    } while ( tab1.includes(this.listSongs[this.curRound].name) || tab1.includes(this.listAllSongs[rng].name) );                       
                     tab1[index] = this.listAllSongs[rng].name;
                 }
             }
@@ -126,7 +129,14 @@ class Partie {
                 if (index === theId) {
                     tab2[index] = this.listSongs[this.curRound].name;
                 }else{
-                    tab2[index] = this.listAllSongs[Math.floor(Math.random()*this.listAllSongs.length)].name;
+                    let rng;
+                    do {
+                    rng = Math.floor(Math.random()*this.listAllSongs.length);
+                    console.log("allow ?");
+                    
+                    } while ( tab2.includes(this.listSongs[this.curRound].name) || tab2.includes(this.listAllSongs[rng].name) );
+
+                    tab2[index] = this.listAllSongs[rng].name;
                 }
             }
             this.carre = tab2;
