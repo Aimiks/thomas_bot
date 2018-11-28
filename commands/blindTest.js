@@ -6,6 +6,7 @@ const ytsearch = require('youtube-search');
 const ytdl = require('ytdl-core');
 const stringSimilarity = require('string-similarity');
 const Discord = require('discord.js'); // Require the Discord.js library.
+const Ffmpeg = require('fluent-ffmpeg');
 
 
 
@@ -90,9 +91,32 @@ let unserializeAnimeList = function (callback) {
     });
 }
 
+let getMeanVolume = function(stream){
+    return new Promise( (resolve, reject) => {
+        new Ffmpeg({ source: stream })
+        .withAudioFilter('volumedetect')
+        .addOption('-f', 'null')
+        .addOption('-t', '20') // duration
+        .noVideo()
+        .on('end', function(stdout, stderr){
+         
+         // find the mean_volume in the output
+         let match = stderr.match(/\s(-[0-9]\d.\d+)/);
+         if(!match || match && !match[0]) {
+            console.log(stderr);
+         }
+         return match && match[0] ? resolve(parseFloat(match[0])) : reject("failed");
+       })
+       
+       .saveToFile('/dev/null');
+    });
+
+   }
+
 exports.util = {
     unserializeAnimeList,
-    addToJsonFile
+    addToJsonFile,
+    getMeanVolume
 };
 
 
@@ -317,7 +341,8 @@ module.exports.play = (message, Game, client) => {
                 Game.addPlayer(element.user);
                 element.send(":crab: Hi ready to play ? :crab: (yes/no)");
                 setTimeout( ()=> {
-                    if(!Game.players.find((p) => p.ID === element.id).isReady) {
+                    let currP = Game.players.find((p) => p.ID === element.id);
+                    if(currP && !currP.isReady) {
                         element.send("Vous ne faites donc pas partie du jeu. :wave:");
                         Game.mpTable = Game.mpTable.filter( (s) => s.id!==element.id);
                         Game.players = Game.players.filter( (p) => p.ID!==element.id);
@@ -386,12 +411,20 @@ function startNewRound(Game, client) {
         if(Game.timerId) clearInterval(Game.timerId);
         Game.currStream.end();
     }
-
     // wait that every ppl got the message
-    Promise.all(queue_promises).then( () => {
-        // play song
-        let streamOptions = { seek: 0, volume: 1 };
+    let stream = ytdl(Game.getCurrentRoundAnime().link, { filter: 'audioonly' });
+    queue_promises.push(getMeanVolume(stream));
+
+    Promise.all(queue_promises).then( (res) => {
+
         let stream = ytdl(Game.getCurrentRoundAnime().link, { filter: 'audioonly' });
+        let db = res[res.length-1]==="failed" ? -20 : res[res.length-1];
+        db *= -1;
+        let default_volume = 1;
+        let gain =Math.pow(2,(db-20)/6); 
+        let volume = default_volume * gain;
+        console.log("Volume music : " + volume + " [" + gain.toFixed(1) + "] | db : " + db );
+        let streamOptions = { seek: 0, volume };
         Game.currStream = Game.connection.playStream(stream, streamOptions);
         Game.currStream.setBitrate(30000);
 
@@ -400,7 +433,7 @@ function startNewRound(Game, client) {
         Game.timerId = setInterval(() => {
             Game.timerValue=(Game.currStream.time)/1000;
         }, 50);
-    });
+    }).catch(err => console.log(err));
 
 
 
@@ -428,13 +461,16 @@ module.exports.privateMessage = (message, Game, client) => {
             return;
         } else if(message.content.search(/(^no$)|(^n$)|(^nn$)|(^non$)/)>=0) {
             message.author.send("Vous ne faites donc pas partie du jeu. :wave:");
-            Game.mpTable = Game.mpTable.filter( (s) => s!=message.author);
-            Game.players = Game.players.filter( (p) => p.ID!=message.author.id);
+            Game.mpTable = Game.mpTable.filter( (s) => s.id!==message.author.id);
+            Game.players = Game.players.filter( (p) => p.ID!==message.author.id);
             // stop the game if no one play
             if(Game.mpTable.length ===0 ) {
                 Game.started = false;
                 Game.voiceChannel.leave();
                 client.user.setActivity("");
+            } else if(Game.areAllPlayersReady() && !Game.started) {
+                startNewRound(Game,client);
+                Game.started = true;
             }
                 
             return;
@@ -442,7 +478,7 @@ module.exports.privateMessage = (message, Game, client) => {
             message.author.send("Vous devez répondre [y]es/[n]o");
             return;
         }
-    }
+    } 
     if (Game.getPlayerSelectModeState(message.author.id) || (message.content.length >= 3 && message.content.replace(/[^a-z]/,"").length!=0)) {     
         let replied_number = -1;
         message.content = message.content.trim();
@@ -473,6 +509,7 @@ module.exports.privateMessage = (message, Game, client) => {
             Game.playerHaveResponded(message.author.id);
                 ///formule : (1/t*8) * 3 pts
                 if (replied_number === Game.carreSol) {
+                    Game.timerValue = Game.timerValue < 0.5 ? 0.5 : Game.timerValue; 
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
                     let sc = (1/Game.timerValue*8) * 3;
                     Game.playerAddScore(message.author.id, sc);
@@ -489,6 +526,7 @@ module.exports.privateMessage = (message, Game, client) => {
             Game.playerHaveResponded(message.author.id);
                 ///Formule : 1/t*2+1
                 if (replied_number === Game.duoSol) {
+                    Game.timerValue = Game.timerValue < 0.5 ? 0.5 : Game.timerValue; 
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
                     let sc = 1/Game.timerValue*2+1
                     Game.playerAddScore( message.author.id ,sc);
@@ -497,7 +535,7 @@ module.exports.privateMessage = (message, Game, client) => {
                     if (Game.firstToFindCarre) {
                         Game.firstToFindCarre = false;
                         Game.mpTable.forEach(e => {
-                            e.send(`:wheelchair: ${message.author.username} a trouvé la réponse en premier en ${Game.timerValue.toFixed(1)}s dans le mode 2 propositions ! :wheelchair:`);
+                            e.send(`:wheelchair: __${message.author.username}__ a trouvé la réponse en premier en **${Game.timerValue.toFixed(1)}s** dans le mode 2 propositions ! :wheelchair:`);
                         });
                     }
                 }

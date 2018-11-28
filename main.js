@@ -108,10 +108,24 @@ client.on('message', (message) => {
         /** TEST COMMANDS */
         /** TEST UNSERIALIZE */
         else if (message.content.startsWith(">test")) {
-            commands.blindTest.util.unserializeAnimeList( (res) => console.log(res));
+            let link = "https://www.youtube.com/watch?v=-77UEct0cZM";
+            commands.blindTest.util.getMeanVolume(ytdl(link, { filter: 'audioonly' })).then( () => {
+                    //const streamOptions = { seek: 0, volume: 1 };
+                    var voiceChannel = message.member.voiceChannel;
+                    voiceChannel.join().then(connection => {
+                        conn = connection;
+                        console.log("joined channel");
+                        streamOptions = { seek: 0, volume: 1 };
+                        stream = ytdl(link, { filter: 'audioonly' });
+                        dispatcher = connection.playStream(stream, streamOptions);
+                    }).catch(err => console.log(err));
+                });
+            
         }
     }
 });
+
+
 
 
 //
