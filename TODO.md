@@ -1,6 +1,5 @@
 # TODO
 * Faire la fonction >HELP
-* ajouter l'option ost:nom_ost
 * `>btadd` ligne 162, faire une méthode ou c'est sûr que le l'arg affiché est le bon par rapport au title et link
 * replace était buggé et ajouté un .url, faire un script pour que si y'a un .url cela devient le .link
 * aliases
@@ -19,3 +18,4 @@
 * ~~réponse ouverte auto~~
 * ~~faire embeed msg~~
 * ~~propositions uniques~~
+* ~~ajouter l'option ost:nom_ost~~

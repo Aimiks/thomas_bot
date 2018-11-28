@@ -88,8 +88,7 @@ client.on('message', (message) => {
             let noRounds = message.content.split(' ')[1];
             let seed = message.content.split(' ')[2];
             Game = new Partie(noRounds, seed);
-            Game.started = true;
-            commands.blindTest.play(message, Game);
+            commands.blindTest.play(message, Game, client);
             client.user.setActivity("BlindTest Anime", {type:"PLAYING"});
         } 
         /** ADD TO BLINDTEST */

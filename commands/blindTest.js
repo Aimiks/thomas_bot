@@ -105,7 +105,7 @@ module.exports.add = (client, message, YTKEY) => {
     let bt_queue;
     let args = message.content.split(",");
     // regex to find type
-    let regex = /ed[1-9][0-9]?$|op[1-9][0-9]?$|ost[1-9][0-9]?$/gim
+    let regex = /ed[1-9][0-9]?$|op[1-9][0-9]?$/gim
     let types = [];
     let names = [];
 
@@ -120,13 +120,21 @@ module.exports.add = (client, message, YTKEY) => {
     let err = false;
     args.forEach( (arg) => {
         let matches = arg.match(regex);
-        if(!matches) {
-            message.channel.send(`:x: ${arg} ne contient aucun type. Chaques anime doit avoir un type (opN, edN, ostN) __**en dernier argument**__.`);
+        let ost_split = arg.split("ost:");
+        if(!matches && ost_split.length===0) {
+            message.channel.send(`:x: ${arg} ne contient aucun type. Chaques anime doit avoir un type (opN, edN, ost:ost_name) __**en dernier argument**__.`);
             err = true;
             return;
+        } else if(matches) {
+            types.push(matches[0]);
+            names.push(arg.replace(regex,'').trim());
+        } else {
+            // take the last occurence in case the anime contain 'ost:'
+            let ost_name = ost_split[ost_split.length-1];
+            types.push("ost:"+ost_name.trim());
+            names.push(arg.replace("ost:"+ost_name,'').trim());
         }
-        types.push(matches[0]);
-        names.push(arg.replace(regex,'').trim());
+
     });
     if(err) return;
     let opts = {
@@ -292,7 +300,7 @@ module.exports.remove = (message) => {
  * @param {import('discord.js').Message} message
  * @param {Partie} Game
  */
-module.exports.play = (message, Game) => {
+module.exports.play = (message, Game, client) => {
     let voiceChannel = message.member.voiceChannel;
 
     try {
@@ -308,6 +316,23 @@ module.exports.play = (message, Game) => {
                 Game.mpTable.push(element.user);
                 Game.addPlayer(element.user);
                 element.send(":crab: Hi ready to play ? :crab: (yes/no)");
+                setTimeout( ()=> {
+                    if(!Game.players.find((p) => p.ID === element.id).isReady) {
+                        element.send("Vous ne faites donc pas partie du jeu. :wave:");
+                        Game.mpTable = Game.mpTable.filter( (s) => s.id!==element.id);
+                        Game.players = Game.players.filter( (p) => p.ID!==element.id);
+                        // stop the game if no one play
+                        if(Game.mpTable.length ===0 ) {
+                            Game.started = false;
+                            Game.voiceChannel.leave();
+                            client.user.setActivity("");
+                        }
+                        else if(Game.areAllPlayersReady() && !Game.started) {
+                            startNewRound(Game,client);
+                            Game.started = true;
+                        }
+                    }
+                },10000);
             }
 
         });
@@ -387,7 +412,6 @@ function startNewRound(Game, client) {
 * @param {import('discord.js').User[]} mpTable
 */
 module.exports.privateMessage = (message, Game, client) => {
-    let {started} = Game;
     if (message.author.bot) {
         return;
     }
@@ -398,18 +422,22 @@ module.exports.privateMessage = (message, Game, client) => {
             Game.playerReady(message.author.id);
 
             if (Game.areAllPlayersReady()) {
+                Game.started = true;
                 startNewRound(Game,client);
             }
             return;
         } else if(message.content.search(/(^no$)|(^n$)|(^nn$)|(^non$)/)>=0) {
             message.author.send("Vous ne faites donc pas partie du jeu. :wave:");
             Game.mpTable = Game.mpTable.filter( (s) => s!=message.author);
+            Game.players = Game.players.filter( (p) => p.ID!=message.author.id);
             // stop the game if no one play
             if(Game.mpTable.length ===0 ) {
                 Game.started = false;
                 Game.voiceChannel.leave();
                 client.user.setActivity("");
             }
+                
+            return;
         } else {
             message.author.send("Vous devez répondre [y]es/[n]o");
             return;
