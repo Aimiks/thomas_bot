@@ -10,6 +10,7 @@ const Bot = require('./model/Bot.js');
 
 
 //var mpTable = ["Lewho", "「Mx」"];
+/** @type Partie  */
 var Game = null;
 
 
@@ -70,7 +71,7 @@ client.on('message', (message) => {
         
         /** ANSWER TO PRIVATE MESSAGE WHILE IN GAME */
         if ( Game !== null){        
-            if (Game.mpTable.includes(message.author)) {
+            if (Game.mpTable.includes(message.author) && Game.playersIdAcceptedAnswers.includes(message.author.id)) {
                 commands.blindTest.privateMessage(message,Game, client);
             }
         } 
@@ -87,6 +88,10 @@ client.on('message', (message) => {
         if (message.content.startsWith(commands.blindTest.prefix.play)) {
             let noRounds = message.content.split(' ')[1];
             let seed = message.content.split(' ')[2];
+            if(parseInt(noRounds)>300) {
+                message.channel.send("Nombre de round trop élévé, max: 300"); 
+                return;
+            }
             Game = new Partie(noRounds, seed);
             commands.blindTest.play(message, Game, client);
             client.user.setActivity("BlindTest Anime", {type:"PLAYING"});
@@ -103,6 +108,10 @@ client.on('message', (message) => {
         /** REMOVE ANIME IN BLINDTEST */
         else if (message.content.startsWith(commands.blindTest.prefix.remove)) {
             commands.blindTest.remove(message);
+        } 
+        /** SEND SOME OCCURENCES NUMBER IN THE LIST */
+        else if(message.content.startsWith(">btcount")) {
+            commands.blindTest.countList(message.channel);
         }
 
         /** TEST COMMANDS */

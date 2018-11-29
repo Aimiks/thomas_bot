@@ -39,10 +39,13 @@ class Partie {
         this.firstToFindCash = true;
         this.firstToFindCarre = true;
         this.firstToFindDouble = true;
+         /**@type {String[] } */
+        this.playersIdAcceptedAnswers = [];
     }
 
     addPlayer(user) {
         this.players.push(new Player(user));
+        this.playersIdAcceptedAnswers.push(user.id);
     }
 
     areAllPlayersReady(){
@@ -208,6 +211,10 @@ class Partie {
         });
         
         return resTab;
+    }
+
+    removeIdFromAcceptedAnswers(pId) {
+        this.playersIdAcceptedAnswers = this.playersIdAcceptedAnswers.filter( (id) => id!==pId);
     }
     
 };

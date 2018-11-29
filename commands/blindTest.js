@@ -91,27 +91,27 @@ let unserializeAnimeList = function (callback) {
     });
 }
 
-let getMeanVolume = function(stream){
-    return new Promise( (resolve, reject) => {
+let getMeanVolume = function (stream) {
+    return new Promise((resolve, reject) => {
         new Ffmpeg({ source: stream })
-        .withAudioFilter('volumedetect')
-        .addOption('-f', 'null')
-        .addOption('-t', '20') // duration
-        .noVideo()
-        .on('end', function(stdout, stderr){
-         
-         // find the mean_volume in the output
-         let match = stderr.match(/mean_volume:\s-[0-9]+.\d+/);
-         if(!match || match && !match[0]) {
-            console.log(stderr);
-         }
-         return match && match[0] ? resolve(parseFloat(match[0].substring('mean_volume:'.length).trim())) : reject("failed");
-       })
-       
-       .saveToFile('/dev/null');
+            .withAudioFilter('volumedetect')
+            .addOption('-f', 'null')
+            .addOption('-t', '20') // duration
+            .noVideo()
+            .on('end', function (stdout, stderr) {
+
+                // find the mean_volume in the output
+                let match = stderr.match(/mean_volume:\s-[0-9]+.\d+/);
+                if (!match || match && !match[0]) {
+                    console.log(stderr);
+                }
+                return match && match[0] ? resolve(parseFloat(match[0].substring('mean_volume:'.length).trim())) : reject("failed");
+            })
+
+            .saveToFile('/dev/null');
     });
 
-   }
+}
 
 exports.util = {
     unserializeAnimeList,
@@ -340,12 +340,13 @@ module.exports.play = (message, Game, client) => {
                 Game.mpTable.push(element.user);
                 Game.addPlayer(element.user);
                 element.send(":crab: Hi ready to play ? :crab: (yes/no)");
-                setTimeout( ()=> {
+                setTimeout(() => {
                     let currP = Game.players.find((p) => p.ID === element.id);
-                    if(currP && !currP.isReady) {
+                    if (currP && !currP.isReady) {
                         element.send("Vous ne faites donc pas partie du jeu. :wave:");
                         Game.mpTable = Game.mpTable.filter((s) => s.id !== element.id);
                         Game.players = Game.players.filter((p) => p.ID !== element.id);
+                        Game.removeIdFromAcceptedAnswers(element.id);
                         // stop the game if no one play
                         if (Game.mpTable.length === 0) {
                             Game.started = false;
@@ -415,15 +416,16 @@ function startNewRound(Game, client) {
     let stream = ytdl(Game.getCurrentRoundAnime().link, { filter: 'audioonly' });
     queue_promises.push(getMeanVolume(stream));
 
-    Promise.all(queue_promises).then( (res) => {
-
+    Promise.all(queue_promises).then((res) => {
+        // accept players PM
+        Game.playersIdAcceptedAnswers = (Game.players.map((p) => p.ID));
         let stream = ytdl(Game.getCurrentRoundAnime().link, { filter: 'audioonly' });
-        let db = res[res.length-1]==="failed" ? -20 : res[res.length-1];
+        let db = res[res.length - 1] === "failed" ? -20 : res[res.length - 1];
         db *= -1;
         let default_volume = 1;
-        let gain =Math.pow(2,(db-20)/6); 
+        let gain = Math.pow(2, (db - 20) / 6);
         let volume = default_volume * gain;
-        console.log("Volume music : " + volume + " [" + gain.toFixed(1) + "] | db : " + db );
+        console.log("Volume music : " + volume + " [" + gain.toFixed(1) + "] | db : " + db);
         let streamOptions = { seek: 0, volume };
         Game.currStream = Game.connection.playStream(stream, streamOptions);
         Game.currStream.setBitrate(30000);
@@ -448,9 +450,9 @@ module.exports.privateMessage = (message, Game, client) => {
     if (message.author.bot) {
         return;
     }
-    let regex = /(^ok$)|(^oui$)|(^o$)|(^yes$)|(^y$)|(^go$)/gmi;
-    if (!Game.areAllPlayersReady()) {
 
+    if (!Game.areAllPlayersReady()) {
+        let regex = /(^ok$)|(^oui$)|(^o$)|(^yes$)|(^y$)|(^go$)/gmi;
         if (message.content.search(regex) >= 0) {
             Game.playerReady(message.author.id);
 
@@ -461,15 +463,15 @@ module.exports.privateMessage = (message, Game, client) => {
             return;
         } else if (message.content.search(/(^no$)|(^n$)|(^nn$)|(^non$)/) >= 0) {
             message.author.send("Vous ne faites donc pas partie du jeu. :wave:");
-            Game.mpTable = Game.mpTable.filter( (s) => s.id!==message.author.id);
-            Game.players = Game.players.filter( (p) => p.ID!==message.author.id);
+            Game.mpTable = Game.mpTable.filter((s) => s.id !== message.author.id);
+            Game.players = Game.players.filter((p) => p.ID !== message.author.id);
             // stop the game if no one play
             if (Game.mpTable.length === 0) {
                 Game.started = false;
                 Game.voiceChannel.leave();
                 client.user.setActivity("");
-            } else if(Game.areAllPlayersReady() && !Game.started) {
-                startNewRound(Game,client);
+            } else if (Game.areAllPlayersReady() && !Game.started) {
+                startNewRound(Game, client);
                 Game.started = true;
             }
 
@@ -490,7 +492,6 @@ module.exports.privateMessage = (message, Game, client) => {
                 Game.playerHaveResponded(message.author.id);
                 ///formule : ( 1/t*12 ) * 5pts                 
                 let res = IAAdapt(Game.listSongs[Game.curRound].name, message.content);
-                
                 if (res) {
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
                     console.log(`\x1b[33m${message.author.username}\x1b[0m a trouvé \x1b[33m${Game.listSongs[Game.curRound].name}\x1b[0m !`);
@@ -510,7 +511,7 @@ module.exports.privateMessage = (message, Game, client) => {
                 Game.playerHaveResponded(message.author.id);
                 ///formule : (1/t*8) * 3 pts
                 if (replied_number === Game.carreSol) {
-                    Game.timerValue = Game.timerValue < 0.5 ? 0.5 : Game.timerValue; 
+                    Game.timerValue = Game.timerValue < 0.5 ? 0.5 : Game.timerValue;
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
                     let sc = (1 / Game.timerValue * 8) * 3;
                     Game.playerAddScore(message.author.id, sc);
@@ -527,7 +528,7 @@ module.exports.privateMessage = (message, Game, client) => {
                 Game.playerHaveResponded(message.author.id);
                 ///Formule : 1/t*2+1
                 if (replied_number === Game.duoSol) {
-                    Game.timerValue = Game.timerValue < 0.5 ? 0.5 : Game.timerValue; 
+                    Game.timerValue = Game.timerValue < 0.5 ? 0.5 : Game.timerValue;
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
                     let sc = 1 / Game.timerValue * 2 + 1
                     Game.playerAddScore(message.author.id, sc);
@@ -542,6 +543,7 @@ module.exports.privateMessage = (message, Game, client) => {
                 }
                 break;
         }
+        Game.removeIdFromAcceptedAnswers(message.author.id);
         console.log("Timer value : " + Game.timerValue);
         console.log(`${message.author.username} a ${Game.getPlayerScore(message.author.id)} points de score`);
         let curr_anime = Game.listSongs[Game.curRound];
@@ -657,7 +659,7 @@ function IAAdapt(rightAnwser, anwser) {
         }
         tempo.forEach(ele => {
             combinaisons.push(ele);
-        });        
+        });
     }
 
     let result = [];
@@ -678,7 +680,7 @@ function IAAdapt(rightAnwser, anwser) {
         } else if (combinaisons[i].length > 6 && combinaisons[i].length <= 12) {
             if (coherence > 0.8) {
                 return true;
-            } 
+            }
         }
         else if (combinaisons[i].length > 12 && combinaisons[i].length <= 20) {
             if (coherence > 0.70) {
@@ -691,9 +693,34 @@ function IAAdapt(rightAnwser, anwser) {
             }
         }
     }
-
     return false;
 }
+
+module.exports.countList = (channel) => {
+    unserializeAnimeList((animes) => {
+        let op_nb = 0;
+        let ed_nb = 0;
+        let ost_nb = 0;
+        Object.values(animes).forEach((a) => {
+            if (a.type.match(/ost/)) {
+                ost_nb++;
+                return;
+            }
+            if (a.type.match(/op/)) {
+                op_nb++;
+                return;
+            }
+            if (a.type.match(/ed/)) {
+                ed_nb++;
+                return;
+            }
+        });
+        let popular = animes.slice().sort((a, b) => animes.filter(an => an.name === a.name).length - animes.filter(an => an.name === b.name).length).pop();
+        let pop_nb = animes.filter( a => a.name===popular.name).length;
+        channel.send(`La liste contient __${Object.keys(animes).length}__ entrées dont **${op_nb}** openings, **${ed_nb}** endings et **${ost_nb}** osts ! L'anime le plus récurrent est __${toTitleCase(popular.name)}__ (${pop_nb}).`);
+    })
+}
+
 /**
  * 
  * @param {String} str 
