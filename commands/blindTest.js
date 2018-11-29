@@ -101,11 +101,11 @@ let getMeanVolume = function(stream){
         .on('end', function(stdout, stderr){
          
          // find the mean_volume in the output
-         let match = stderr.match(/\s(-[0-9]\d.\d+)/);
+         let match = stderr.match(/mean_volume:\s-[0-9]+.\d+/);
          if(!match || match && !match[0]) {
             console.log(stderr);
          }
-         return match && match[0] ? resolve(parseFloat(match[0])) : reject("failed");
+         return match && match[0] ? resolve(parseFloat(match[0].substring('mean_volume:'.length).trim())) : reject("failed");
        })
        
        .saveToFile('/dev/null');
