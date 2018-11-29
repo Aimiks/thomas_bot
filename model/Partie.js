@@ -1,4 +1,5 @@
 const Player = require('./Player.js');
+const PrepAnimeCombi = require('./PrepAnimeCombi.js');
 const seedrandom = require("seedrandom");
 const blindTest = require("../commands/blindTest");
 
@@ -17,7 +18,7 @@ class Partie {
         this.players = [];
         /** @type {import('./Anime')[]}*/
         this.listAllSongs = [];
-        /** @type {import('./Anime')[]}*/
+        /** @type {PrepAnimeCombi[]}*/
         this.listSongs = [];
         this.playersReady = false;
         this.playersHaveResponded = false;
@@ -46,6 +47,11 @@ class Partie {
     addPlayer(user) {
         this.players.push(new Player(user));
         this.playersIdAcceptedAnswers.push(user.id);
+    }
+    addSong(anime){
+        let prepAnime = new PrepAnimeCombi(anime, this.listAllSongs);
+        console.log("generation DONE For round no°" + this.listSongs.length);
+        this.listSongs.push(prepAnime);
     }
 
     areAllPlayersReady(){
@@ -103,53 +109,14 @@ class Partie {
     }
 
     getDuo(){
-        if (this.duo === null) {
-            let theId = Math.floor(Math.random()*2);
-            let tab1 = [];
-            this.duoSol = theId+1;
-            for (let index = 0; index < 2; index++) {
-                if (index === theId) {
-                    tab1[index] = this.listSongs[this.curRound].name;
-                }else{
-                    let rng;
-                    do {
-                    rng = Math.floor(Math.random()*this.listAllSongs.length);
-                    } while ( tab1.includes(this.listAllSongs[rng].name) || (this.listSongs[this.curRound].name ===  this.listAllSongs[rng].name));                       
-                    tab1[index] = this.listAllSongs[rng].name;
-                }
-            }
-            this.duo = tab1;
-            return this.duo;
-        }
-        else{
-            return this.duo;
-        }
+        this.duoSol = this.listSongs[this.curRound].duoSol;
+        return this.listSongs[this.curRound].duoProp;
+
     }
 
     getCarre(){
-        if (this.carre === null) {
-            let theId = Math.floor(Math.random()*4);
-            let tab2 = [];
-            this.carreSol = theId+1;
-            for (let index = 0; index < 4; index++) {
-                if (index === theId) {
-                    tab2[index] = this.listSongs[this.curRound].name;
-                }else{
-                    let rng;
-                    do {
-                    rng = Math.floor(Math.random()*this.listAllSongs.length);
-                    
-                    } while (tab2.includes(this.listAllSongs[rng].name) || (this.listSongs[this.curRound].name ===  this.listAllSongs[rng].name) );
-
-                    tab2[index] = this.listAllSongs[rng].name;
-                }
-            }
-            this.carre = tab2;
-            return tab2;
-        }
-        else{
-            return this.carre;
-        }
+        this.carreSol = this.listSongs[this.curRound].carreSol;
+        return this.listSongs[this.curRound].carreProp;
     }
 
     playerAddScore(playerID,scoreToAdd){
@@ -190,7 +157,7 @@ class Partie {
      * @return {import('./Anime')} anime
      */
     getCurrentRoundAnime() {
-        return this.listSongs[this.curRound];
+        return this.listSongs[this.curRound].anime;
     }
 
     updatePlayerBestScore(playerID,score,song, time) {
