@@ -2,6 +2,7 @@ const Anime = require('../model/Anime.js');
 const fs = require('fs');
 const Partie = require('../model/Partie.js');
 const Player = require('../model/Player.js');
+const PrepAnimeCombi = require('../model/PrepAnimeCombi.js');
 const ytsearch = require('youtube-search');
 const ytdl = require('ytdl-core');
 const stringSimilarity = require('string-similarity');
@@ -385,25 +386,25 @@ module.exports.play = (message, Game, client) => {
             }
 
         });
+
+        unserializeAnimeList((res) => {
+            for (let i = 0; i < res.length; i++) {
+                Game.listAllSongs.push(res[i]);
+            }
+            let listrngtemp = [];
+            for (let index = 0; index < Game.noRounds; index++) {
+                let rng;
+                do {
+                    rng = Math.floor(Math.random() * res.length);
+                } while (listrngtemp.includes(rng));
+                listrngtemp.push(rng);
+                Game.addSong(res[rng]);
+            }
+        });
     }
     catch (error) {
         message.channel.send("You must be in a voice channel");
     }
-
-    unserializeAnimeList((res) => {
-        for (let i = 0; i < res.length; i++) {
-            Game.listAllSongs.push(res[i]);
-        }
-        let listrngtemp = [];
-        for (let index = 0; index < Game.noRounds; index++) {
-            let rng;
-            do {
-                rng = Math.floor(Math.random() * res.length);
-            } while (listrngtemp.includes(rng));
-            listrngtemp.push(rng);
-            Game.listSongs.push(res[rng]);
-        }
-    });
 }
 
 /**
@@ -514,10 +515,10 @@ module.exports.privateMessage = (message, Game, client) => {
             case 1:
                 Game.playerHaveResponded(message.author.id);
                 ///formule : ( 1/t*12 ) * 5pts                 
-                let res = IAAdapt(Game.listSongs[Game.curRound].name, message.content);
+                let res = IAAdapt(Game.listSongs[Game.curRound], message.content);
                 if (res) {
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
-                    console.log(`\x1b[33m${message.author.username}\x1b[0m a trouvé \x1b[33m${Game.listSongs[Game.curRound].name}\x1b[0m !`);
+                    console.log(`\x1b[33m${message.author.username}\x1b[0m a trouvé \x1b[33m${Game.listSongs[Game.curRound].anime.name}\x1b[0m !`);
                     if (Game.firstToFindCash) {
                         Game.firstToFindCash = false;
                         Game.mpTable.forEach(e => {
@@ -526,7 +527,7 @@ module.exports.privateMessage = (message, Game, client) => {
                     }
                     let sc = (1 / Game.timerValue * 12) * 5;
                     Game.playerAddScore(message.author.id, sc);
-                    Game.updatePlayerBestScore(message.author.id, sc, Game.listSongs[Game.curRound].name, Game.timerValue.toFixed(1));
+                    Game.updatePlayerBestScore(message.author.id, sc, Game.listSongs[Game.curRound].anime.name, Game.timerValue.toFixed(1));
                     message.author.send(`:tada: Tu as trouvé la bonne réponse ! :tada:`);
                 }
                 break;
@@ -538,7 +539,7 @@ module.exports.privateMessage = (message, Game, client) => {
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
                     let sc = (1 / Game.timerValue * 8) * 3;
                     Game.playerAddScore(message.author.id, sc);
-                    Game.updatePlayerBestScore(message.author.id, sc, Game.listSongs[Game.curRound].name, Game.timerValue.toFixed(1));
+                    Game.updatePlayerBestScore(message.author.id, sc, Game.listSongs[Game.curRound].anime.name, Game.timerValue.toFixed(1));
                     if (Game.firstToFindCarre) {
                         Game.firstToFindCarre = false;
                         Game.mpTable.forEach(e => {
@@ -555,10 +556,10 @@ module.exports.privateMessage = (message, Game, client) => {
                     console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
                     let sc = 1 / Game.timerValue * 2 + 1
                     Game.playerAddScore(message.author.id, sc);
-                    Game.updatePlayerBestScore(message.author.id, sc, Game.listSongs[Game.curRound].name, Game.timerValue.toFixed(1));
+                    Game.updatePlayerBestScore(message.author.id, sc, Game.listSongs[Game.curRound].anime.name, Game.timerValue.toFixed(1));
 
-                    if (Game.firstToFindCarre) {
-                        Game.firstToFindCarre = false;
+                    if (Game.firstToFindDouble) {
+                        Game.firstToFindDouble = false;
                         Game.mpTable.forEach(e => {
                             e.send(`:wheelchair: __${message.author.username}__ a trouvé la réponse en premier en **${Game.timerValue.toFixed(1)}s** dans le mode 2 propositions ! :wheelchair:`);
                         });
@@ -569,7 +570,7 @@ module.exports.privateMessage = (message, Game, client) => {
         Game.removeIdFromAcceptedAnswers(message.author.id);
         console.log("Timer value : " + Game.timerValue);
         console.log(`${message.author.username} a ${Game.getPlayerScore(message.author.id)} points de score`);
-        let curr_anime = Game.listSongs[Game.curRound];
+        let curr_anime = Game.listSongs[Game.curRound].anime;
         let opts_embed = {
             title: `:o: La bonne réponse était`,
             color: client.resolver.resolveColor('RANDOM')
@@ -684,33 +685,12 @@ module.exports.countList = (channel) => {
 
 /**
  * 
- * @param {string} rightAnwser 
+ * @param {PrepAnimeCombi} prep 
  * @param {string} anwser 
  */
-function IAAdapt(rightAnwser, anwser) {
-    /**@type string[] */
-    let combinaisons = [];
-    let tabSplit = rightAnwser.split(" ");
+function IAAdapt(prep, anwser) {
+    let combinaisons = prep.combinaisons;
 
-    combi("", tabSplit, tabSplit.length, combinaisons);
-
-    if (combinaisons.length >= 6) {
-        let tempo = [];
-        for (let j = 0; j < combinaisons.length; j++) {
-            let temp = combinaisons[j].split(" ");
-            let regroupedConcat = "";
-
-            for (let k = 1; k < temp.length; k++) {
-                regroupedConcat += temp[k][0];
-            }
-            tempo.push(regroupedConcat);
-        }
-        tempo.forEach(ele => {
-            combinaisons.push(ele);
-        });
-    }
-
-    let result = [];
     for (let i = 0; i < combinaisons.length; i++) {
 
         let newRightAnwser = combinaisons[i].replace(" ", "");
@@ -742,6 +722,7 @@ function IAAdapt(rightAnwser, anwser) {
         }
     }
     return false;
+
 }
 
 /**
@@ -752,25 +733,4 @@ function toTitleCase(str) {
     return str.replace(/\w\S*/g, function (txt) {
         return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
     });
-}
-
-/**
- * 
- * @param {string[]} tabRes 
- * @param {string[]} tabSplit 
- *
- */
-function combi(tabRes, tabSplit, k, PTabFinal) {
-    if (k > tabSplit.length) {
-        return;
-    } else if (k == 0) {
-        PTabFinal.push(tabRes);
-    } else {
-        tabSplit.forEach(e => {
-            let G = tabSplit.filter((word) => word != e)
-            let L2 = tabRes + " " + e;
-
-            combi(L2, G, k - 1, PTabFinal);
-        });
-    }
 }
