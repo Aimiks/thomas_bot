@@ -112,11 +112,34 @@ let getMeanVolume = function (stream) {
     });
 
 }
+let getUniqueAnimeList = (animes) => {
+    return Promise.resolve().then(() => {
+            let copy_indx = [];
+            let strings_to_return = "----Test unicité----";
+            Object.values(animes).forEach((anime, i) => {
+                Object.values(animes).forEach((other, ind) => {
+                    if (anime !== other && copy_indx.findIndex((e) => e === i) === -1) {
+                        console.log(`[${i}] Testing ${anime.name} ${anime.type} with [${ind}] ${other.name} ${other.type}...`);
+                        if ((anime.name.split(" ").length && other.name.split(" ").length && anime.name.split(" ")[0] === other.name.split(" ")[0] || IAAdapt(anime.name, other.name)) && anime.type === other.type) {
+                            copy_indx.push(ind);
+                            strings_to_return += `\n[${ind}] __${other.name} ${other.type}__ semble être une copie de [${i}] __${anime.name} ${anime.type}__`;
+                        }
+
+                    }
+                });
+
+            });
+            return strings_to_return;
+
+    });
+    
+}
 
 exports.util = {
     unserializeAnimeList,
     addToJsonFile,
-    getMeanVolume
+    getMeanVolume,
+    getUniqueAnimeList
 };
 
 
@@ -634,6 +657,31 @@ module.exports.privateMessage = (message, Game, client) => {
     }
 }
 
+module.exports.countList = (channel) => {
+    unserializeAnimeList((animes) => {
+        let op_nb = 0;
+        let ed_nb = 0;
+        let ost_nb = 0;
+        Object.values(animes).forEach((a) => {
+            if (a.type.match(/ost/)) {
+                ost_nb++;
+                return;
+            }
+            if (a.type.match(/op/)) {
+                op_nb++;
+                return;
+            }
+            if (a.type.match(/ed/)) {
+                ed_nb++;
+                return;
+            }
+        });
+        let popular = animes.slice().sort((a, b) => animes.filter(an => an.name === a.name).length - animes.filter(an => an.name === b.name).length).pop();
+        let pop_nb = animes.filter(a => a.name === popular.name).length;
+        channel.send(`La liste contient __${Object.keys(animes).length}__ entrées dont **${op_nb}** openings, **${ed_nb}** endings et **${ost_nb}** osts ! L'anime le plus récurrent est __${toTitleCase(popular.name)}__ (${pop_nb}).`);
+    })
+}
+
 /**
  * 
  * @param {string} rightAnwser 
@@ -694,31 +742,6 @@ function IAAdapt(rightAnwser, anwser) {
         }
     }
     return false;
-}
-
-module.exports.countList = (channel) => {
-    unserializeAnimeList((animes) => {
-        let op_nb = 0;
-        let ed_nb = 0;
-        let ost_nb = 0;
-        Object.values(animes).forEach((a) => {
-            if (a.type.match(/ost/)) {
-                ost_nb++;
-                return;
-            }
-            if (a.type.match(/op/)) {
-                op_nb++;
-                return;
-            }
-            if (a.type.match(/ed/)) {
-                ed_nb++;
-                return;
-            }
-        });
-        let popular = animes.slice().sort((a, b) => animes.filter(an => an.name === a.name).length - animes.filter(an => an.name === b.name).length).pop();
-        let pop_nb = animes.filter( a => a.name===popular.name).length;
-        channel.send(`La liste contient __${Object.keys(animes).length}__ entrées dont **${op_nb}** openings, **${ed_nb}** endings et **${ost_nb}** osts ! L'anime le plus récurrent est __${toTitleCase(popular.name)}__ (${pop_nb}).`);
-    })
 }
 
 /**
