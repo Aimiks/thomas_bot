@@ -169,7 +169,7 @@ module.exports.add = (client, message, YTKEY) => {
     args.forEach((arg) => {
         let matches = arg.match(regex);
         let ost_split = arg.split("ost:");
-        if (!matches && ost_split.length === 0) {
+        if (!matches && ost_split.length === 1) {
             message.channel.send(`:x: ${arg} ne contient aucun type. Chaques anime doit avoir un type (opN, edN, ost:ost_name) __**en dernier argument**__.`);
             err = true;
             return;
@@ -465,6 +465,8 @@ function startNewRound(Game, client) {
 
 
 }
+
+
 /**
 * @param {import('discord.js').Message} message 
 * @param {Partie} Game 
@@ -580,8 +582,7 @@ module.exports.privateMessage = (message, Game, client) => {
         embed_answer.addField(":musical_note: Type de la musique", curr_anime.type);
 
         embed_answer.setThumbnail(`http://i3.ytimg.com/vi/${new URL(curr_anime.link).searchParams.get("v")}/0.jpg`);
-
-        message.author.send(embed_answer);
+        message.author.send(embed_answer)
 
         if (Game.playersHaveResponded) {
             Game.reset();
