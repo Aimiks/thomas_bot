@@ -10,16 +10,22 @@ const Discord = require('discord.js'); // Require the Discord.js library.
 const Ffmpeg = require('fluent-ffmpeg');
 
 
-
-
 const prefix = {
     add: '>btadd ',
-    play: '>blindtest ',
+    play: '>btplay ',
     replace: '>btreplace ',
-    remove: '>btremove '
+    remove: '>btremove ',
+    count: '>btcount'
 }
 module.exports.prefix = prefix;
 
+const helpCommandsObj = {
+    add: `\`\`\`Markdown\n# Ajoute une musique d'un anime dans la liste.\n${prefix.add.trim()} anime_name (opN | edN | ost:ost_name)\`\`\``,
+    play: `\`\`\`Markdown\n# Lance une partie de blindtest dans le channel vocal où vous êtes.\n${prefix.play.trim()} nombre_round [seed?]\`\`\``,
+    replace: `\`\`\`Markdown\n# Remplace le lien de la musique d'un anime.\n${prefix.replace.trim()} anime_name (type | index), new_link\`\`\``,
+    remove: `\`\`\`Markdown\n# Supprime une musique de la liste.\n${prefix.remove.trim()} anime_name (type | index)\`\`\``,
+    count: `\`\`\`Markdown\n# Compte les entrées dans la liste.\n${prefix.count}\`\`\``
+}
 
 
 /**
@@ -121,7 +127,7 @@ let getUniqueAnimeList = (animes) => {
                 Object.values(animes).forEach((other, ind) => {
                     if (anime !== other && copy_indx.findIndex((e) => e === i) === -1) {
                         console.log(`[${i}] Testing ${anime.name} ${anime.type} with [${ind}] ${other.name} ${other.type}...`);
-                        if ((anime.name.split(" ").length && other.name.split(" ").length && anime.name.split(" ")[0] === other.name.split(" ")[0] || IAAdapt(anime.name, other.name)) && anime.type === other.type) {
+                        if ((anime.name.split(" ").length && other.name.split(" ").length && anime.name.split(" ")[0] === other.name.split(" ")[0] || IAAdapt(new PrepAnimeCombi(anime,null), other.name)) && anime.type === other.type) {
                             copy_indx.push(ind);
                             strings_to_return += `\n[${ind}] __${other.name} ${other.type}__ semble être une copie de [${i}] __${anime.name} ${anime.type}__`;
                         }
@@ -140,7 +146,8 @@ exports.util = {
     unserializeAnimeList,
     addToJsonFile,
     getMeanVolume,
-    getUniqueAnimeList
+    getUniqueAnimeList,
+    test
 };
 
 
@@ -682,6 +689,25 @@ module.exports.countList = (channel) => {
         let pop_nb = animes.filter(a => a.name === popular.name).length;
         channel.send(`La liste contient __${Object.keys(animes).length}__ entrées dont **${op_nb}** openings, **${ed_nb}** endings et **${ost_nb}** osts ! L'anime le plus récurrent est __${toTitleCase(popular.name)}__ (${pop_nb}).`);
     })
+}
+
+module.exports.help = (message) => {
+    let args = message.content.split(' ');
+    let command;
+    if(args.length>1) {
+        command = args[1];
+    }  
+    let final_string = '';
+    if(command && helpCommandsObj[command]) {
+        final_string+=helpCommandsObj[command];
+    } 
+    else {
+        Object.values(helpCommandsObj).forEach( (h) => {
+            final_string+=h;
+        });
+    }
+
+    message.channel.send(final_string);
 }
 
 /**

@@ -110,8 +110,11 @@ client.on('message', (message) => {
             commands.blindTest.remove(message);
         }
         /** SEND SOME OCCURENCES NUMBER IN THE LIST */
-        else if (message.content.startsWith(">btcount")) {
+        else if (message.content.startsWith(commands.blindTest.prefix.count)) {
             commands.blindTest.countList(message.channel);
+        }
+        else if(message.content.startsWith(">bthelp")) {
+            commands.blindTest.help(message);
         }
 
         /** TEST COMMANDS */
@@ -126,13 +129,17 @@ client.on('message', (message) => {
                     } else {
                         message.channel.send(string);
                     }
-
+    
                 });
                 message.channel.send("En cours de test...");
             });
         }
     }
 
+});
+
+client.on('message', (message) => {
+    
 });
 
 

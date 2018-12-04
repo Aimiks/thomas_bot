@@ -10,10 +10,12 @@ class PrepAnimeCombi{
         this.anime = anime;        
         /**@type string[]*/
         this.combinaisons = this.getcombi();
-        this.duoSol = null;
-        this.duoProp = this.generateDuo(allAnimeList);
-        this.carreSol = null;
-        this.carreProp = this.generateCarre(allAnimeList);        
+        if(allAnimeList) {
+            this.duoSol = null;
+            this.duoProp = this.generateDuo(allAnimeList);
+            this.carreSol = null;
+            this.carreProp = this.generateCarre(allAnimeList);     
+        }
     }
 
     getcombi(){
