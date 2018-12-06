@@ -42,9 +42,9 @@ let addToJsonFile = function (animes, callback = null) {
         animes_obj[a.name + " " + a.type] = { ...a };
     });
     let json_list = JSON.stringify(animes_obj);
-    fs.exists('animelist.json', bool => {
+    fs.exists(__dirname+'/../animelist.json', bool => {
         if (bool) {
-            fs.readFile('animelist.json', 'utf8', (err, res) => {
+            fs.readFile(__dirname+'/../animelist.json', 'utf8', (err, res) => {
                 if (err) throw err;
 
                 let obj = JSON.parse(res);
@@ -58,13 +58,13 @@ let addToJsonFile = function (animes, callback = null) {
                     }
                 });
                 json_list = JSON.stringify(obj);
-                fs.writeFile('animelist.json', json_list, 'utf8', err => {
+                fs.writeFile(__dirname+'/../animelist.json', json_list, 'utf8', err => {
                     if (err) throw err;
                     if (callback) callback({ already_have, size: Object.keys(obj).length });
                 });
             });
         } else {
-            fs.writeFile('animelist.json', json_list, 'utf8', err => {
+            fs.writeFile(__dirname+'/../animelist.json', json_list, 'utf8', err => {
                 if (err) throw err;
                 if (callback) callback({ already_have, size: animes.length });
             });
@@ -81,9 +81,9 @@ let unserializeAnimeList = function (callback) {
     if (typeof callback !== "function") {
         console.error("[unserializeAnimeList] callback is not a function");
     }
-    fs.exists('animelist.json', bool => {
+    fs.exists(__dirname+'/../animelist.json', bool => {
         if (bool) {
-            fs.readFile('animelist.json', 'utf8', (err, res) => {
+            fs.readFile(__dirname+'/../animelist.json', 'utf8', (err, res) => {
                 if (err) throw err;
                 let animes = [];
                 let objs = JSON.parse(res);
@@ -94,11 +94,7 @@ let unserializeAnimeList = function (callback) {
             });
         } else {
             console.log("Failed to get the anime list");
-            fs.readdir(testFolder, (err, files) => {
-                files.forEach(file => {
-                  console.log(file);
-                });
-              })
+
             throw "Animelist does not exist."
         }
     });
