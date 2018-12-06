@@ -146,8 +146,7 @@ exports.util = {
     unserializeAnimeList,
     addToJsonFile,
     getMeanVolume,
-    getUniqueAnimeList,
-    test
+    getUniqueAnimeList
 };
 
 
