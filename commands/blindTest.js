@@ -93,6 +93,12 @@ let unserializeAnimeList = function (callback) {
                 callback(animes);
             });
         } else {
+            console.log("Failed to get the anime list");
+            fs.readdir(testFolder, (err, files) => {
+                files.forEach(file => {
+                  console.log(file);
+                });
+              })
             throw "Animelist does not exist."
         }
     });
