@@ -22,8 +22,8 @@ module.exports.prefix = prefix;
 const helpCommandsObj = {
     add: `\`\`\`Markdown\n# Ajoute une musique d'un anime dans la liste.\n${prefix.add.trim()} anime_name (opN | edN | ost:ost_name)\`\`\``,
     play: `\`\`\`Markdown\n# Lance une partie de blindtest dans le channel vocal où vous êtes.\n${prefix.play.trim()} nombre_round [seed?]\`\`\``,
-    replace: `\`\`\`Markdown\n# Remplace le lien de la musique d'un anime.\n${prefix.replace.trim()} anime_name (type | index), new_link\`\`\``,
-    remove: `\`\`\`Markdown\n# Supprime une musique de la liste.\n${prefix.remove.trim()} anime_name (type | index)\`\`\``,
+    replace: `\`\`\`Markdown\n# Remplace le lien de la musique d'un anime.\n${prefix.replace.trim()} (anime_name type | index), new_link\`\`\``,
+    remove: `\`\`\`Markdown\n# Supprime une musique de la liste.\n${prefix.remove.trim()} (anime_name type | index)\`\`\``,
     count: `\`\`\`Markdown\n# Compte les entrées dans la liste.\n${prefix.count}\`\`\``
 }
 
