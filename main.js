@@ -153,7 +153,7 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
     if (oldUserChannel === undefined && newUserChannel !== undefined) {
         // User join a voice channel
 
-        if (!newMember.user.bot && newMember.user.username === "kaaris") {
+        if (!newMember.user.bot && newMember.user.username === "Legitness") {
             client.playFF(newUserChannel);
         }
 
