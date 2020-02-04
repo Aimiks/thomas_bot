@@ -107,6 +107,9 @@ let getMeanVolume = function (stream) {
             .addOption('-f', 'null')
             .addOption('-t', '20') // duration
             .noVideo()
+            .on('error', function(err) {
+                console.error("[GetMeanVolume] Error : "+ err.message)
+            })
             .on('end', function (stdout, stderr) {
 
                 // find the mean_volume in the output
@@ -117,7 +120,7 @@ let getMeanVolume = function (stream) {
                 return match && match[0] ? resolve(parseFloat(match[0].substring('mean_volume:'.length).trim())) : reject("failed");
             })
 
-            .saveToFile('/dev/null');
+            .saveToFile('./');
     });
 
 }
@@ -445,8 +448,16 @@ function startNewRound(Game, client) {
         Game.currStream.end();
     }
     // wait that every ppl got the message
-    let stream = ytdl(Game.getCurrentRoundAnime().link, { filter: 'audioonly' });
-    queue_promises.push(getMeanVolume(stream));
+    let isValidate = ytdl.validateURL(Game.getCurrentRoundAnime().link);
+    if(isValidate) {
+        let stream = ytdl(Game.getCurrentRoundAnime().link, { filter: 'audioonly' });
+        queue_promises.push(getMeanVolume(stream));
+    } else {
+        console.log("Copyrighted or unavaible video :(");
+        Game.mpTable.forEach(e => {
+            queue_promises.push(e.send("Video copyrighted....."));
+        });
+    }
 
     Promise.all(queue_promises).then((res) => {
         // accept players PM
