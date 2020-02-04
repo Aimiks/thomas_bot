@@ -115,6 +115,8 @@ client.on('message', (message) => {
         }
         else if(message.content.startsWith(">bthelp")) {
             commands.blindTest.help(message);
+        } else if(message.content.startsWith(">btclear")) {
+            commands.blindTest.clearInvalid(message);
         }
 
         /** TEST COMMANDS */

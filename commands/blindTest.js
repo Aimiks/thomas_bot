@@ -89,7 +89,7 @@ let unserializeAnimeList = function (callback) {
                 let animes = [];
                 let objs = JSON.parse(res);
                 Object.values(objs).forEach(({ name, type, link }) => {
-                    animes.push(new Anime(name, type, link));
+                    animes.push(new Anime(name, type, link));           
                 });
                 callback(animes);
             });
@@ -99,6 +99,24 @@ let unserializeAnimeList = function (callback) {
             throw "Animelist does not exist."
         }
     });
+}
+
+module.exports.clearInvalid= function(message) {
+    message.channel.send("Suppression des animes invalides...");
+    let total = 0;
+    unserializeAnimeList((animes) => {
+        Object.values(animes).forEach(({ name, type, link }) => {
+            ytdl.getInfo(link, (err, info) => {
+                if(err) {
+                    message.content = `>btremove ${name} ${type}`;
+                    module.exports.remove(message);
+                    total++;
+                }
+            });   
+        });
+    });
+    message.channel.send(`Fin de la suppression des animes invalides ! ${total} animes supprimés !`);
+
 }
 
 let getMeanVolume = function (stream) {
@@ -409,7 +427,7 @@ module.exports.play = (message, Game, client) => {
                 
                 do {
                     rng = Math.floor(Math.random() * res.length);
-                } while (listrngtemp.includes(rng) || !ytdl.validateURL(res[rng].link));
+                } while (listrngtemp.includes(rng));
                 listrngtemp.push(rng);
                 Game.addSong(res[rng]);
             }
