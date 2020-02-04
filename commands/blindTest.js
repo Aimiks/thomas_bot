@@ -76,6 +76,7 @@ let addToJsonFile = function (animes, callback = null) {
 
 /**
  * @param {function} callback 
+ * @return {Anime[]} animes
  */
 let unserializeAnimeList = function (callback) {
     if (typeof callback !== "function") {
@@ -405,9 +406,10 @@ module.exports.play = (message, Game, client) => {
             let listrngtemp = [];
             for (let index = 0; index < Game.noRounds; index++) {
                 let rng;
+                
                 do {
                     rng = Math.floor(Math.random() * res.length);
-                } while (listrngtemp.includes(rng));
+                } while (listrngtemp.includes(rng) || !ytdl.validateURL(res[rng].link));
                 listrngtemp.push(rng);
                 Game.addSong(res[rng]);
             }
