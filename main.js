@@ -71,9 +71,7 @@ client.on('message', (message) => {
 
         /** ANSWER TO PRIVATE MESSAGE WHILE IN GAME */
         if (Game !== null) {
-            if (Game.mpTable.includes(message.author) && Game.playersIdAcceptedAnswers.includes(message.author.id)) {
-                commands.blindTest.privateMessage(message, Game, client);
-            }
+            commands.blindTest.privateMessage(message, Game, client);
         }
         /** TEST ROLL */
         if (message.content.startsWith(">roll")) {

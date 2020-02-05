@@ -128,6 +128,7 @@ let getMeanVolume = function (stream) {
             .noVideo()
             .on('error', function(err) {
                 console.error("[GetMeanVolume] Error : "+ err.message)
+                reject("failed");
             })
             .on('end', function (stdout, stderr) {
 
@@ -380,61 +381,60 @@ module.exports.remove = (message) => {
  */
 module.exports.play = (message, Game, client) => {
     let voiceChannel = message.member.voiceChannel;
-
-    try {
-        voiceChannel.join().then(connection => {
-            let mem = voiceChannel.members.array();
-            for (let index = 0; index < mem.length; index++) {
-                if (mem[index].user.bot) {
-                    continue;
-                }
-                let element = mem[index];
-                Game.connection = connection;
-                Game.voiceChannel = voiceChannel;
-                Game.mpTable.push(element.user);
-                Game.addPlayer(element.user);
-                element.send(":crab: Hi ready to play ? :crab: (yes/no)");
-                setTimeout(() => {
-                    let currP = Game.players.find((p) => p.ID === element.id);
-                    if (currP && !currP.isReady) {
-                        element.send("Vous ne faites donc pas partie du jeu. :wave:");
-                        Game.mpTable = Game.mpTable.filter((s) => s.id !== element.id);
-                        Game.players = Game.players.filter((p) => p.ID !== element.id);
-                        Game.removeIdFromAcceptedAnswers(element.id);
-                        // stop the game if no one play
-                        if (Game.mpTable.length === 0) {
-                            Game.started = false;
-                            Game.voiceChannel.leave();
-                            client.user.setActivity("");
+    if(voiceChannel) {
+        new Promise( async (resolve,reject) => {
+            let tmpmsg = [];
+            tmpmsg.push(await message.channel.send("Création de la partie..."));
+            unserializeAnimeList(async (animes) => {
+                tmpmsg.push(await message.channel.send("Chargement des musiques..."));
+                Game.init(animes);
+                tmpmsg.push(await message.channel.send(":ok:"));
+                resolve();
+                tmpmsg.forEach( m => m.delete());
+            });
+        }).then( () => {
+            try {
+                voiceChannel.join().then(connection => {
+                    Game.connection = connection;
+                    Game.voiceChannel = voiceChannel;
+                    let mem = voiceChannel.members.array();
+                    for (let index = 0; index < mem.length; index++) {
+                        if (mem[index].user.bot) {
+                            continue;
                         }
-                        else if (Game.areAllPlayersReady() && !Game.started) {
-                            startNewRound(Game, client);
-                            Game.started = true;
-                        }
+                        let member = mem[index];
+                        Game.addPlayer(member.user);
+                        member.send(":crab: Hi ready to play ? :crab: (yes/no)");
+                        setTimeout(() => {
+                            let currP = Game.players.find((p) => p.ID === member.id);
+                            if (currP && !currP.isReady) {
+                                member.send("Vous ne faites donc pas partie du jeu. :wave:");
+                                Game.players = Game.players.filter((p) => p.ID !== member.id);
+                                Game.removeIdFromAcceptedAnswers(member.id);
+                                // stop the game if no one play
+                                if (Game.players.length === 0) {
+                                    Game.started = false;
+                                    Game.voiceChannel.leave();
+                                    client.user.setActivity("");
+                                }
+                                else if (Game.areAllPlayersReady() && !Game.started) {
+                                    startNewRound(Game, client);
+                                    Game.started = true;
+                                }
+                            }
+                        }, 10000);
                     }
-                }, 10000);
+        
+                });
+        
             }
-
-        });
-
-        unserializeAnimeList((res) => {
-            for (let i = 0; i < res.length; i++) {
-                Game.listAllSongs.push(res[i]);
+            catch (error) {
+                message.channel.send(":no_entry: Vous devez être dans un channel vocal");
             }
-            let listrngtemp = [];
-            for (let index = 0; index < Game.noRounds; index++) {
-                let rng;
-                
-                do {
-                    rng = Math.floor(Math.random() * res.length);
-                } while (listrngtemp.includes(rng));
-                listrngtemp.push(rng);
-                Game.addSong(res[rng]);
-            }
-        });
-    }
-    catch (error) {
-        message.channel.send("You must be in a voice channel");
+        }
+        );
+    } else {
+        message.channel.send(":no_entry: Vous devez être dans un channel vocal");
     }
 }
 
@@ -448,7 +448,7 @@ function startNewRound(Game, client) {
     console.log("Round n°" + Game.curRound);
     console.log("======================");
     let queue_promises = [];
-    Game.mpTable.forEach(e => {
+    Game.getAllPlayersUser().forEach(e => {
         e.send(`:new: La manche n°**${Game.curRound}** va commencer ! **Préparez vous**`);
         let opts_embed = {
             title: ` Faites votre choix !`,
@@ -468,30 +468,28 @@ function startNewRound(Game, client) {
         Game.currStream.end();
     }
     // wait that every ppl got the message
-    let isValidate = ytdl.validateURL(Game.getCurrentRoundAnime().link);
-    if(isValidate) {
-        let stream = ytdl(Game.getCurrentRoundAnime().link, { filter: 'audioonly' });
-        queue_promises.push(getMeanVolume(stream));
-    } else {
-        console.log("Copyrighted or unavaible video :(");
-        Game.mpTable.forEach(e => {
-            queue_promises.push(e.send("Video copyrighted....."));
-        });
-    }
-
+    let stream = ytdl(Game.getCurrentRoundAnime().link, { filter: 'audioonly' });
+    //let stream = Game.listReadableStreamSongs[Game.curRound];
+    /*stream
+    .on("error", () => {})
+    .on("finish", () => {
+        startNewRound(Game, client);
+    });*/
+    queue_promises.push(getMeanVolume(stream));
     Promise.all(queue_promises).then((res) => {
         // accept players PM
         Game.playersIdAcceptedAnswers = (Game.players.map((p) => p.ID));
-        let stream = ytdl(Game.getCurrentRoundAnime().link, { filter: 'audioonly' });
         let db = res[res.length - 1] === "failed" ? -20 : res[res.length - 1];
         db *= -1;
         let default_volume = 1;
         let gain = Math.pow(2, (db - 20) / 6);
         let volume = default_volume * gain;
         console.log("Volume music : " + volume + " [" + gain.toFixed(1) + "] | db : " + db);
-        let streamOptions = { seek: 0, volume };
-        Game.currStream = Game.connection.playStream(stream, streamOptions);
-        Game.currStream.setBitrate(30000);
+        let streamOptions = { seek: 0, volume, bitrate: 30000 };
+        //console.log(stream);
+        //console.log(Game.listReadableStreamSongs);
+        let str = ytdl(Game.getCurrentRoundAnime().link, { filter: 'audioonly' });
+        Game.currStream = Game.connection.playStream(str, streamOptions);
 
         //start timer
 
@@ -515,6 +513,9 @@ module.exports.privateMessage = (message, Game, client) => {
     if (message.author.bot) {
         return;
     }
+    if (!(Game.getAllPlayersUser().includes(message.author) && Game.playersIdAcceptedAnswers.includes(message.author.id))) {
+        return;
+    }
 
     if (!Game.areAllPlayersReady()) {
         let regex = /(^ok$)|(^oui$)|(^o$)|(^yes$)|(^y$)|(^go$)/gmi;
@@ -528,10 +529,9 @@ module.exports.privateMessage = (message, Game, client) => {
             return;
         } else if (message.content.search(/(^no$)|(^n$)|(^nn$)|(^non$)/) >= 0) {
             message.author.send("Vous ne faites donc pas partie du jeu. :wave:");
-            Game.mpTable = Game.mpTable.filter((s) => s.id !== message.author.id);
             Game.players = Game.players.filter((p) => p.ID !== message.author.id);
             // stop the game if no one play
-            if (Game.mpTable.length === 0) {
+            if (Game.players.length === 0) {
                 Game.started = false;
                 Game.voiceChannel.leave();
                 client.user.setActivity("");
@@ -562,7 +562,7 @@ module.exports.privateMessage = (message, Game, client) => {
                     console.log(`\x1b[33m${message.author.username}\x1b[0m a trouvé \x1b[33m${Game.listSongs[Game.curRound].anime.name}\x1b[0m !`);
                     if (Game.firstToFindCash) {
                         Game.firstToFindCash = false;
-                        Game.mpTable.forEach(e => {
+                        Game.getAllPlayersUser().forEach(e => {
                             e.send(`:dollar: __${message.author.username}__ a trouvé la réponse en premier en **${Game.timerValue.toFixed(1)}s** dans le mode réponse ouverte ! :dollar:`);
                         });
                     }
@@ -570,6 +570,8 @@ module.exports.privateMessage = (message, Game, client) => {
                     Game.playerAddScore(message.author.id, sc);
                     Game.updatePlayerBestScore(message.author.id, sc, Game.listSongs[Game.curRound].anime.name, Game.timerValue.toFixed(1));
                     message.author.send(`:tada: Tu as trouvé la bonne réponse ! :tada:`);
+                } else {
+                    message.author.send(`:woman_gesturing_no: Mauvaise réponse... :woman_gesturing_no:`);
                 }
                 break;
             case 2:
@@ -583,10 +585,13 @@ module.exports.privateMessage = (message, Game, client) => {
                     Game.updatePlayerBestScore(message.author.id, sc, Game.listSongs[Game.curRound].anime.name, Game.timerValue.toFixed(1));
                     if (Game.firstToFindCarre) {
                         Game.firstToFindCarre = false;
-                        Game.mpTable.forEach(e => {
+                        Game.getAllPlayersUser().forEach(e => {
                             e.send(`:capital_abcd: __${message.author.username}__ a trouvé la réponse en premier en **${Game.timerValue.toFixed(1)}s** dans le mode 4 propositions ! :capital_abcd: `);
                         });
                     }
+                    message.author.send(`:tada: Tu as trouvé la bonne réponse ! :tada:`);
+                } else {
+                    message.author.send(`:woman_gesturing_no: Mauvaise réponse... :woman_gesturing_no:`);
                 }
                 break;
             case 3:
@@ -601,10 +606,13 @@ module.exports.privateMessage = (message, Game, client) => {
 
                     if (Game.firstToFindDouble) {
                         Game.firstToFindDouble = false;
-                        Game.mpTable.forEach(e => {
+                        Game.getAllPlayersUser().forEach(e => {
                             e.send(`:wheelchair: __${message.author.username}__ a trouvé la réponse en premier en **${Game.timerValue.toFixed(1)}s** dans le mode 2 propositions ! :wheelchair:`);
                         });
                     }
+                    message.author.send(`:tada: Tu as trouvé la bonne réponse ! :tada:`);
+                } else {
+                    message.author.send(`:woman_gesturing_no: Mauvaise réponse... :woman_gesturing_no:`);
                 }
                 break;
         }
@@ -621,7 +629,7 @@ module.exports.privateMessage = (message, Game, client) => {
         embed_answer.addField(":musical_note: Type de la musique", curr_anime.type);
 
         embed_answer.setThumbnail(`http://i3.ytimg.com/vi/${new URL(curr_anime.link).searchParams.get("v")}/0.jpg`);
-        message.author.send(embed_answer)
+        message.author.send(embed_answer);
 
         if (Game.playersHaveResponded) {
             Game.reset();
@@ -629,8 +637,7 @@ module.exports.privateMessage = (message, Game, client) => {
                 let idWinner = Game.getBestPlayerScore();
                 let nameWinner = Game.getPlayerUserName(idWinner);
                 let scoreWinner = Game.getPlayerScore(idWinner);
-                let mptabtemp = Game.mpTable.slice();
-                Game.mpTable = [];
+                let mptabtemp = Game.getAllPlayersUser().slice();
                 /**@type {Player[]} */
                 let finalBoard = Game.getEndBoardResult();
                 let opts_embed = {

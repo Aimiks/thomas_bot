@@ -2,6 +2,8 @@ const Player = require('./Player.js');
 const PrepAnimeCombi = require('./PrepAnimeCombi.js');
 const seedrandom = require("seedrandom");
 const blindTest = require("../commands/blindTest");
+const ytdl = require('ytdl-core');
+
 
 
 class Partie {
@@ -20,6 +22,7 @@ class Partie {
         this.listAllSongs = [];
         /** @type {PrepAnimeCombi[]}*/
         this.listSongs = [];
+        this.listReadableStreamSongs = [];
         this.playersReady = false;
         this.playersHaveResponded = false;
         this.duo = null;
@@ -28,8 +31,6 @@ class Partie {
         this.carreSol = null;
         this.timerValue = 0;
         this.timerId = null; 
-        /** @type {import('discord.js').User[]} */
-        this.mpTable = [];
         this.started = false;
         /** @type {import('discord.js').VoiceConnection} */
         this.connection = null;
@@ -44,16 +45,36 @@ class Partie {
         this.playersIdAcceptedAnswers = [];
     }
 
+    init(animes) {
+        for (let i = 0; i < animes.length; i++) {
+            this.listAllSongs.push(animes[i]);
+        }
+        let listrngtemp = [];
+        for (let index = 0; index < this.noRounds; index++) {
+            let rng;
+            do {
+                rng = Math.floor(Math.random() * animes.length);
+            } while (listrngtemp.includes(rng));
+            listrngtemp.push(rng);
+            this.addSong(animes[rng]);
+        }
+    }
+
     addPlayer(user) {
         this.players.push(new Player(user));
         this.playersIdAcceptedAnswers.push(user.id);
     }
     addSong(anime){
         let prepAnime = new PrepAnimeCombi(anime, this.listAllSongs);
-        console.log("generation DONE For round no°" + this.listSongs.length);
         this.listSongs.push(prepAnime);
-    }
+        this.listReadableStreamSongs.push(ytdl(anime.link, { filter: 'audioonly' }));
+        console.log("generation DONE For round no°" + this.listSongs.length);
 
+    }
+    getAllPlayersUser() {
+        /** @type {import('discord.js').User[]} */
+        return this.players.map(p => p.user);
+    }
     areAllPlayersReady(){
         return this.players.findIndex( (p) => !p.isReady)===-1;
     }
