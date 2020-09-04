@@ -1,5 +1,5 @@
 # TODO
-* Faire la fonction >HELP
+
 * `>btadd` ligne 162, faire une méthode ou c'est sûr que le l'arg affiché est le bon par rapport au title et link
 * replace était buggé et ajouté un .url, faire un script pour que si y'a un .url cela devient le .link
 * aliases
@@ -10,6 +10,7 @@
 
 # TRUCS FINI
 
+* ~~Faire la fonction >HELP~~
 * ~~lecture du fichier anime~~
 * ~~ecriture du fichier anime~~
 * ~~Systeme de reponse~~
