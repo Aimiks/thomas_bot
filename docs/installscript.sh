@@ -34,7 +34,7 @@ cd ./thomas_bot
 yarn install
 
 echo module.exports = {  >> sensitive_infos.js
-echo BOT_TOKEN:\"MzE4Nzc1NDgxNTE0MDY1OTIw.Dt3FpA.16YZ2LRE8_L6plT7UoyoSCYZ6Rk\", >> sensitive_infos.js
-echo YT_KEY:\"AIzaSyAflLeBJij8VRe_Reh8IgOyzBGpac6_dHo\" >> sensitive_infos.js
+echo BOT_TOKEN:\"\", >> sensitive_infos.js
+echo YT_KEY:\"\" >> sensitive_infos.js
 echo } >> sensitive_infos.js
 
