@@ -121,6 +121,7 @@ let getMeanVolume = function (stream) {
       .noVideo()
       .on("error", function (err) {
         console.error("[GetMeanVolume] Error : " + err.message);
+        resolve(12);
         //reject("failed");
       })
       .on("end", function (stdout, stderr) {
