@@ -527,7 +527,7 @@ function startNewRound(Game, client) {
     Game.getAllPlayersUser().forEach((e) => {
       e.send(
         `:new: La manche n°**${Game.curRound + 1}**${
-          Game.curRound == Game.noRounds ? " __DERNIERE MANCHE__" : ""
+          Game.curRound + 1 == Game.noRounds ? " __DERNIERE MANCHE__" : ""
         } va commencer ! **Préparez vous**`
       );
       let opts_embed = {
@@ -568,8 +568,13 @@ function startNewRound(Game, client) {
           `:robot: Vidéo supprimé ou plus disponible. Skip du round. Anime: __${currAnime.name} [${currAnime.type}]__ :robot:`
         );
       });
-      Game.curRound++;
-      startNewRound(Game, client);
+      if (Game.curRound + 1 != Game.noRounds) {
+        Game.curRound++;
+        startNewRound(Game, client);
+      } else {
+        Game.reset();
+        Game.sendEndBoardResult(client);
+      }
     });
     //let stream = Game.listReadableStreamSongs[Game.curRound];
     /*stream
@@ -807,74 +812,7 @@ module.exports.privateMessage = (message, Game, client) => {
     if (Game.playersHaveResponded) {
       Game.reset();
       if (Game.curRound === Game.noRounds - 1) {
-        let idWinner = Game.getBestPlayerScore();
-        let nameWinner = Game.getPlayerUserName(idWinner);
-        let scoreWinner = Game.getPlayerScore(idWinner);
-        let mptabtemp = Game.getAllPlayersUser().slice();
-        /**@type {Player[]} */
-        let finalBoard = Game.getEndBoardResult();
-        let opts_embed = {
-          title: `:headphones: Le blind test est finit !`,
-          description: `Le seed de la partie était : ${Game.ID}`,
-          color: client.resolver.resolveColor("RANDOM"),
-        };
-        let final_embed_message = new Discord.RichEmbed(opts_embed);
-        final_embed_message.setThumbnail(
-          Game.getPlayerUser(idWinner).avatarURL
-        );
-        let emojis = [
-          ":trophy:",
-          ":second_place:",
-          ":third_place:",
-          ":slight_smile:",
-          ":slight_smile:",
-          ":neutral_face:",
-          ":neutral_face:",
-          ":neutral_face:",
-          ":neutral_face:",
-          ":neutral_face:",
-        ];
-        let default_emoji = ":worried:";
-        emojis = emojis.fill(default_emoji, 10, 25);
-        final_embed_message.addField(
-          `:trophy: **${nameWinner}** :trophy:`,
-          `**Score** : __${scoreWinner.toFixed(
-            2
-          )}__ :small_orange_diamond:\n**Meilleur score** : __${finalBoard[0].bestScore.toFixed(
-            2
-          )}__ sur __${finalBoard[0].bestSong}__ trouvé en ${
-            finalBoard[0].time
-          } secondes`
-        );
-        for (let index = 1; index < finalBoard.length && index < 24; index++) {
-          let stats = "";
-          if (index < 6) {
-            stats = `\n**Meilleur score** : __${finalBoard[
-              index
-            ].bestScore.toFixed(2)}__ sur __${
-              finalBoard[index].bestSong
-            }__ trouvé en ${finalBoard[index].time} secondes`;
-          }
-          if (index === 23) {
-            final_embed_message.addField("...", "...");
-          } else if (index < 23) {
-            final_embed_message.addField(
-              `${emojis[index]} ${finalBoard[index].username}`,
-              `Score : __${finalBoard[index].score.toFixed(
-                2
-              )}__ :small_orange_diamond:${stats}`,
-              true
-            );
-          }
-        }
-
-        mptabtemp.forEach((e) => {
-          e.send(final_embed_message);
-        });
-        Game.started = false;
-        Game.voiceChannel.leave();
-        client.user.setActivity("");
-        return;
+        Game.sendEndBoardResult(client);
       } else {
         Game.curRound++;
         startNewRound(Game, client);
