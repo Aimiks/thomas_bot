@@ -175,7 +175,7 @@ let isVideoValid = async function (anime) {
   const { link } = anime;
   var isValid = true;
   try {
-    let p = await ytdl.getInfo(link);
+    let p = await ytdl.getBasicInfo(link);
   } catch (err) {
     isValid = false;
   }
@@ -278,6 +278,9 @@ module.exports.add = (client, message, YTKEY) => {
           )}.`;
         }
         res.forEach((r, ind) => {
+          if (embed.length - 1 < Math.floor(ind / 24)) {
+            embed.push(new Discord.RichEmbed(opt));
+          }
           embed[Math.floor(ind / 24)].addField(
             `${args[ind]}`,
             `[${r.title}](${r.link})`
@@ -557,6 +560,16 @@ function startNewRound(Game, client) {
 
     let stream = ytdl(Game.getCurrentRoundAnime().link, {
       filter: "audioonly",
+    });
+    stream.on("error", (err) => {
+      console.error(`[startNewRound] stream error`, err);
+      Game.getAllPlayersUser().forEach((e) => {
+        e.send(
+          `:robot: Vidéo supprimé ou plus disponible. Skip du round. Anime: __${currAnime.name} [${currAnime.type}]__ :robot:`
+        );
+      });
+      Game.curRound++;
+      startNewRound(Game, client);
     });
     //let stream = Game.listReadableStreamSongs[Game.curRound];
     /*stream
