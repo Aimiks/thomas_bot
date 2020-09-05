@@ -348,16 +348,21 @@ module.exports.replaceLink = (message) => {
         }
         obj[index].link = replacement;
         json_list = JSON.stringify(obj);
-        fs.writeFile("animelist.json", json_list, "utf8", (err) => {
-          if (err) {
-            message.channel.send("Une erreur est survenue");
-            throw err;
-          } else {
-            message.channel.send(
-              `:ballot_box_with_check: Lien de l'anime ${index} remplacé par ${replacement} !`
-            );
+        fs.writeFile(
+          __dirname + "/../animelist.json",
+          json_list,
+          "utf8",
+          (err) => {
+            if (err) {
+              message.channel.send("Une erreur est survenue");
+              throw err;
+            } else {
+              message.channel.send(
+                `:ballot_box_with_check: Lien de l'anime ${index} remplacé par ${replacement} !`
+              );
+            }
           }
-        });
+        );
       });
     } else {
       message.channel.send(
@@ -408,16 +413,21 @@ module.exports.remove = (message) => {
         let tmp = obj[index];
         delete obj[index];
         json_list = JSON.stringify(obj);
-        fs.writeFile("animelist.json", json_list, "utf8", (err) => {
-          if (err) {
-            message.channel.send("Une erreur est survenue");
-            throw err;
-          } else {
-            message.channel.send(
-              `:ballot_box_with_check: Anime ${tmp.name} ${tmp.type} supprimé !`
-            );
+        fs.writeFile(
+          __dirname + "/../animelist.json",
+          json_list,
+          "utf8",
+          (err) => {
+            if (err) {
+              message.channel.send("Une erreur est survenue");
+              throw err;
+            } else {
+              message.channel.send(
+                `:ballot_box_with_check: Anime ${tmp.name} ${tmp.type} supprimé !`
+              );
+            }
           }
-        });
+        );
       });
     } else {
       message.channel.send(
