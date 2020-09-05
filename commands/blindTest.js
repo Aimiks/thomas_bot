@@ -500,8 +500,8 @@ function startNewRound(Game, client) {
   console.log("======================");
   let queue_promises = [];
   isVideoValid(Game.getCurrentRoundAnime()).then((isValid) => {
+    const currAnime = Game.getCurrentRoundAnime();
     if (!isValid) {
-      const currAnime = Game.getCurrentRoundAnime();
       Game.getAllPlayersUser().forEach((e) => {
         e.send(
           `:robot: Vidéo supprimé ou plus disponible. Skip du round. Anime: __${currAnime.name} [${currAnime.type}]__ :robot:`
@@ -509,6 +509,7 @@ function startNewRound(Game, client) {
       });
       return;
     }
+    console.log(`Current anime : ${currAnime.name} [${currAnime.type}`);
     Game.getAllPlayersUser().forEach((e) => {
       e.send(
         `:new: La manche n°**${Game.curRound + 1}**${
