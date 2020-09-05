@@ -322,9 +322,9 @@ module.exports.replaceLink = (message) => {
   let index = args[0].trim();
   let replacement = args[1].trim();
 
-  fs.exists("animelist.json", (bool) => {
+  fs.exists(__dirname + "/../animelist.json", (bool) => {
     if (bool) {
-      fs.readFile("animelist.json", "utf8", (err, res) => {
+      fs.readFile(__dirname + "/../animelist.json", "utf8", (err, res) => {
         if (err) {
           message.channel.send("Une erreur est survenue");
           throw err;
@@ -379,9 +379,9 @@ module.exports.remove = (message) => {
     return;
   }
   let index = message.content.trim();
-  fs.exists("animelist.json", (bool) => {
+  fs.exists(__dirname + "/../animelist.json", (bool) => {
     if (bool) {
-      fs.readFile("animelist.json", "utf8", (err, res) => {
+      fs.readFile(__dirname + "/../animelist.json", "utf8", (err, res) => {
         if (err) {
           message.channel.send("Une erreur est survenue");
           throw err;

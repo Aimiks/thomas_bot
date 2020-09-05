@@ -38,3 +38,4 @@ echo BOT_TOKEN:\"\", >> sensitive_infos.js
 echo YT_KEY:\"\" >> sensitive_infos.js
 echo } >> sensitive_infos.js
 
+yarn global add pm2
