@@ -506,8 +506,8 @@ function startNewRound(Game, client) {
         e.send(
           `:robot: Vidéo supprimé ou plus disponible. Skip du round. Anime: __${currAnime.name} [${currAnime.type}]__ :robot:`
         );
-        return;
       });
+      return;
     }
     Game.getAllPlayersUser().forEach((e) => {
       e.send(
