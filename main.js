@@ -66,10 +66,11 @@ client.on("message", (message) => {
   if (message.author.bot) {
     return;
   }
-  let noLowerCaseMessage = message.content;
-  message.content = message.content.toLowerCase();
+  /*let noLowerCaseMessage = message.content;
+  message.content = message.content.toLowerCase();*/
   /** PRIVATE MESSAGE */
   if (message.guild === null) {
+    message.content = message.content.toLowerCase();
     /** ANSWER TO PRIVATE MESSAGE WHILE IN GAME */
     if (Game !== null) {
       commands.blindTest.privateMessage(message, Game, client);
@@ -83,54 +84,71 @@ client.on("message", (message) => {
     try {
       /** NO PRIVATE MESSAGE */
       /** PLAY BLINDTEST */
-      if (message.content.startsWith(commands.blindTest.prefix.play)) {
-        let noRounds = message.content.split(" ")[1];
-        let seed = message.content.split(" ")[2];
-        if (parseInt(noRounds) > 300) {
-          message.channel.send("Nombre de round trop élévé, max: 300");
-          return;
-        }
-        Game = new Partie(noRounds, seed);
-        commands.blindTest.play(message, Game, client);
-        client.user.setActivity("BlindTest Anime", { type: "PLAYING" });
-      } else if (message.content.startsWith(commands.blindTest.prefix.add)) {
-        /** ADD TO BLINDTEST */
-        commands.blindTest.add(client, message, YT_KEY);
-      } else if (
-        message.content.startsWith(commands.blindTest.prefix.replace)
-      ) {
-        /** REPLACE ANIME SONG LINK IN BLINDTEST  */
-        message.content = noLowerCaseMessage;
-        commands.blindTest.replaceLink(message);
-      } else if (message.content.startsWith(commands.blindTest.prefix.remove)) {
-        /** REMOVE ANIME IN BLINDTEST */
-        commands.blindTest.remove(message);
-      } else if (message.content.startsWith(commands.blindTest.prefix.count)) {
-        /** SEND SOME OCCURENCES NUMBER IN THE LIST */
-        commands.blindTest.countList(message.channel);
-      } else if (message.content.startsWith(">bthelp")) {
-        commands.blindTest.help(message);
-      } else if (message.content.startsWith(commands.blindTest.prefix.clear)) {
-        commands.blindTest.clearInvalids(message);
-      } else if (message.content.startsWith(commands.blindTest.prefix.update)) {
-        commands.blindTest.updateAnimes(client, message, YT_KEY);
-      } else if (message.content.startsWith(">test")) {
-        /** TEST COMMANDS */
-        /** TEST X */
-        commands.blindTest.util.unserializeAnimeList((animes) => {
-          commands.blindTest.util.getUniqueAnimeList(animes).then((string) => {
-            if (string.length > 2000) {
-              for (let i = 0; i < string.length / 2000; i++) {
-                message.channel.send(
-                  string.substring(i * 2000, (i + 1) * 2000)
-                );
-              }
-            } else {
-              message.channel.send(string);
-            }
+      let firstArg = message.content.split(" ")[0].toLowerCase();
+      switch (firstArg) {
+        case commands.blindTest.prefix.play:
+          let noRounds = message.content.split(" ")[1];
+          let seed = message.content.split(" ")[2];
+          if (parseInt(noRounds) > 300) {
+            message.channel.send("Nombre de round trop élévé, max: 300");
+            return;
+          }
+          Game = new Partie(noRounds, seed);
+          commands.blindTest.play(message, Game, client);
+          client.user.setActivity("BlindTest Anime", { type: "PLAYING" });
+          break;
+        case commands.blindTest.prefix.add:
+          /** ADD ANIME SONG */
+          commands.blindTest.add(client, message, YT_KEY);
+          break;
+        case commands.blindTest.prefix.replace:
+          /** REPLACE ANIME SONG LINK IN BLINDTEST  */
+          commands.blindTest.replaceLink(message);
+          break;
+        case commands.blindTest.prefix.remove:
+          /** REMOVE ANIME IN BLINDTEST */
+          commands.blindTest.remove(message);
+          break;
+        case commands.blindTest.prefix.count:
+          /** SEND SOME OCCURENCES NUMBER IN THE LIST */
+          commands.blindTest.countList(message.channel);
+          break;
+        case ">bthelp":
+          commands.blindTest.help(message);
+          break;
+        case commands.blindTest.prefix.clear:
+          commands.blindTest.clearInvalids(message);
+          break;
+        case commands.blindTest.prefix.update:
+          commands.blindTest.updateAnimes(client, message, YT_KEY);
+          break;
+        case commands.blindTest.prefix.testValidity:
+          commands.blindTest.testValidity(message);
+          break;
+        case ">test":
+          /** TEST COMMANDS */
+          /** TEST X */
+          commands.blindTest.util.unserializeAnimeList((animes) => {
+            commands.blindTest.util
+              .getUniqueAnimeList(animes)
+              .then((string) => {
+                if (string.length > 2000) {
+                  for (let i = 0; i < string.length / 2000; i++) {
+                    message.channel.send(
+                      string.substring(i * 2000, (i + 1) * 2000)
+                    );
+                  }
+                } else {
+                  message.channel.send(string);
+                }
+              });
+            message.channel.send("En cours de test...");
           });
-          message.channel.send("En cours de test...");
-        });
+
+          break;
+        case commands.blindTest.prefix.update:
+          commands.blindTest.updateAnimes(client, message, YT_KEY);
+          break;
       }
     } catch (err) {}
   }

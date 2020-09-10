@@ -17,17 +17,19 @@ const prefix = {
   count: ">btcount",
   clear: ">btclear",
   update: ">btupdate",
+  testValidity: ">bttest",
 };
 module.exports.prefix = prefix;
 
 const helpCommandsObj = {
-  add: `\`\`\`Markdown\n# Ajoute une musique d'un anime dans la liste.\n${prefix.add.trim()} anime_name (opN | edN | ost:ost_name)\`\`\``,
-  play: `\`\`\`Markdown\n# Lance une partie de blindtest dans le channel vocal où vous êtes.\n${prefix.play.trim()} nombre_round [seed?]\`\`\``,
-  replace: `\`\`\`Markdown\n# Remplace le lien de la musique d'un anime.\n${prefix.replace.trim()} (anime_name type | index), new_link\`\`\``,
-  remove: `\`\`\`Markdown\n# Supprime une musique de la liste.\n${prefix.remove.trim()} (anime_name type | index)\`\`\``,
+  add: `\`\`\`Markdown\n# Ajoute une musique d'un anime dans la liste.\n${prefix.add.trim()} <anime_name> <(opN | edN | ost:ost_name)>, ... , <anime_name> <(opN | edN | ost:ost_name)>\`\`\``,
+  play: `\`\`\`Markdown\n# Lance une partie de blindtest dans le channel vocal où vous êtes.\n${prefix.play.trim()} <nombre_round> [seed?]\`\`\``,
+  replace: `\`\`\`Markdown\n# Remplace le lien de la musique d'un anime.\n${prefix.replace.trim()} <(anime_name type | index)>, <new_link>\`\`\``,
+  remove: `\`\`\`Markdown\n# Supprime une musique de la liste.\n${prefix.remove.trim()} <(anime_name type | index)>\`\`\``,
   count: `\`\`\`Markdown\n# Compte les entrées dans la liste.\n${prefix.count}\`\`\``,
   clear: `\`\`\`Markdown\n# Supprime les entrées dont la vidéo n'est plus disponible.\n${prefix.clear}\`\`\``,
   update: `\`\`\`Markdown\n# Met à jour les animes qui ne sont plus valides.\n${prefix.update}\`\`\``,
+  testValidity: `\`\`\`Markdown\n# Test la validité du lien.\n${prefix.testValidity} <lien>\`\`\``,
 };
 
 /**
@@ -44,44 +46,39 @@ let addToJsonFile = function (animes, callback = null) {
     animes_obj[a.name + " " + a.type] = { ...a };
   });
   let json_list = JSON.stringify(animes_obj);
-  fs.exists(__dirname + "/../animelist.json", (bool) => {
-    if (bool) {
-      fs.readFile(__dirname + "/../animelist.json", "utf8", (err, res) => {
-        if (err) throw err;
-
-        let obj = JSON.parse(res);
-        animes.forEach((anime) => {
-          // if the list doesn't already have the anime
-          if (!obj[anime.name + " " + anime.type]) {
-            // add it to the list
-            obj[anime.name + " " + anime.type] = { ...anime };
-          } else {
-            already_have.push(anime.name + " " + anime.type);
-          }
-        });
-        json_list = JSON.stringify(obj);
+  fs.readFile(__dirname + "/../animelist.json", "utf8", (err, res) => {
+    if (err) {
+      if (err.code === "ENOENT") {
+        /* write file */
         fs.writeFile(
           __dirname + "/../animelist.json",
           json_list,
           "utf8",
           (err) => {
             if (err) throw err;
-            if (callback)
-              callback({ already_have, size: Object.keys(obj).length });
+            if (callback) callback({ already_have, size: animes.length });
           }
         );
-      });
-    } else {
-      fs.writeFile(
-        __dirname + "/../animelist.json",
-        json_list,
-        "utf8",
-        (err) => {
-          if (err) throw err;
-          if (callback) callback({ already_have, size: animes.length });
-        }
-      );
+        return;
+      }
+      throw err;
     }
+
+    let obj = JSON.parse(res);
+    animes.forEach((anime) => {
+      // if the list doesn't already have the anime
+      if (!obj[anime.name + " " + anime.type]) {
+        // add it to the list
+        obj[anime.name + " " + anime.type] = { ...anime };
+      } else {
+        already_have.push(anime.name + " " + anime.type);
+      }
+    });
+    json_list = JSON.stringify(obj);
+    fs.writeFile(__dirname + "/../animelist.json", json_list, "utf8", (err) => {
+      if (err) throw err;
+      if (callback) callback({ already_have, size: Object.keys(obj).length });
+    });
   });
 };
 
@@ -93,22 +90,21 @@ let unserializeAnimeList = function (callback) {
   if (typeof callback !== "function") {
     console.error("[unserializeAnimeList] callback is not a function");
   }
-  fs.exists(__dirname + "/../animelist.json", (bool) => {
-    if (bool) {
-      fs.readFile(__dirname + "/../animelist.json", "utf8", (err, res) => {
-        if (err) throw err;
-        let animes = [];
-        let objs = JSON.parse(res);
-        Object.values(objs).forEach(({ name, type, link }) => {
-          animes.push(new Anime(name, type, link));
-        });
-        callback(animes);
-      });
-    } else {
-      console.log("Failed to get the anime list");
+  fs.readFile(__dirname + "/../animelist.json", "utf8", (err, res) => {
+    if (err) {
+      if (err.code === "ENOENT") {
+        console.log("Failed to get the anime list");
 
-      throw "Animelist does not exist.";
+        throw "Animelist does not exist.";
+      }
+      throw err;
     }
+    let animes = [];
+    let objs = JSON.parse(res);
+    Object.values(objs).forEach(({ name, type, link }) => {
+      animes.push(new Anime(name, type, link));
+    });
+    callback(animes);
   });
 };
 
@@ -172,10 +168,29 @@ let getUniqueAnimeList = (animes) => {
  * @returns {bool} isValid
  */
 let isVideoValid = async function (anime) {
-  const { link } = anime;
-  var isValid = true;
+  let link = "";
+  if (typeof anime === "string" && anime.startsWith("http")) {
+    link = anime;
+  } else {
+    link = anime.link;
+  }
+  let isValid = false;
   try {
-    let p = await ytdl.getBasicInfo(link);
+    await ytdl.getBasicInfo(link);
+    isValid = await new Promise((resolve) => {
+      let stream = ytdl(link, {
+        filter: "audioonly",
+        range: { start: 0, end: 1 },
+      });
+      stream.on("error", (err) => {
+        resolve(false);
+        stream.destroy();
+      });
+      stream.on("data", () => {
+        resolve(true);
+        stream.destroy();
+      });
+    });
   } catch (err) {
     isValid = false;
   }
@@ -326,53 +341,45 @@ module.exports.replaceLink = (message) => {
   let index = args[0].trim();
   let replacement = args[1].trim();
 
-  fs.exists(__dirname + "/../animelist.json", (bool) => {
-    if (bool) {
-      fs.readFile(__dirname + "/../animelist.json", "utf8", (err, res) => {
-        if (err) {
-          message.channel.send("Une erreur est survenue");
-          throw err;
-        }
-        let obj = JSON.parse(res);
-        // if its a numeric
-        if (!isNaN(index)) {
-          let numeric = parseInt(index);
-          if (numeric < Object.keys(obj).length) {
-            index = Object.keys(obj)[index];
-          } else {
-            message.channel.send(
-              "L'index fournit n'est pas dans l'anime liste"
-            );
-            return;
-          }
-        }
-        if (!obj[index]) {
-          message.channel.send("L'index fournit n'est pas dans l'anime liste");
-          return;
-        }
-        obj[index].link = replacement;
-        json_list = JSON.stringify(obj);
-        fs.writeFile(
-          __dirname + "/../animelist.json",
-          json_list,
-          "utf8",
-          (err) => {
-            if (err) {
-              message.channel.send("Une erreur est survenue");
-              throw err;
-            } else {
-              message.channel.send(
-                `:ballot_box_with_check: Lien de l'anime ${index} remplacé par ${replacement} !`
-              );
-            }
-          }
+  fs.readFile(__dirname + "/../animelist.json", "utf8", (err, res) => {
+    if (err) {
+      if (err.code === "ENOENT") {
+        message.channel.send(
+          "Aucune anime list n'a encore été créée, impossible de remplacer."
         );
-      });
-    } else {
-      message.channel.send(
-        "Aucune anime list n'a encore été créée, impossible de remplacer."
-      );
+        return;
+      } else {
+        message.channel.send("Une erreur est survenue");
+        throw err;
+      }
     }
+    let obj = JSON.parse(res);
+    // if its a numeric
+    if (!isNaN(index)) {
+      let numeric = parseInt(index);
+      if (numeric < Object.keys(obj).length) {
+        index = Object.keys(obj)[index];
+      } else {
+        message.channel.send("L'index fournit n'est pas dans l'anime liste");
+        return;
+      }
+    }
+    if (!obj[index]) {
+      message.channel.send("L'index fournit n'est pas dans l'anime liste");
+      return;
+    }
+    obj[index].link = replacement;
+    json_list = JSON.stringify(obj);
+    fs.writeFile(__dirname + "/../animelist.json", json_list, "utf8", (err) => {
+      if (err) {
+        message.channel.send("Une erreur est survenue");
+        throw err;
+      } else {
+        message.channel.send(
+          `:ballot_box_with_check: Lien de l'anime ${index} remplacé par ${replacement} !`
+        );
+      }
+    });
   });
 };
 
@@ -381,63 +388,55 @@ module.exports.replaceLink = (message) => {
  */
 module.exports.remove = (message) => {
   message.content = message.content.substring(prefix.remove.length);
-  if (message === "") {
+  if (message.content === "") {
     message.channel.send(
       `Nombres d'arguments invalides.\nEx : ${prefix.remove}mirai nikki op1`
     );
     return;
   }
   let index = message.content.trim();
-  fs.exists(__dirname + "/../animelist.json", (bool) => {
-    if (bool) {
-      fs.readFile(__dirname + "/../animelist.json", "utf8", (err, res) => {
-        if (err) {
-          message.channel.send("Une erreur est survenue");
-          throw err;
-        }
-        let obj = JSON.parse(res);
-        // if its a numeric
-        if (!isNaN(index)) {
-          let numeric = parseInt(index);
-          if (numeric < Object.keys(obj).length) {
-            index = Object.keys(obj)[index];
-          } else {
-            message.channel.send(
-              "L'index fournit n'est pas dans l'anime liste"
-            );
-            return;
-          }
-        }
-        if (!obj[index]) {
-          message.channel.send(
-            "L'index fournit ne correspond à aucune entrée dans l'anime liste"
-          );
-          return;
-        }
-        let tmp = obj[index];
-        delete obj[index];
-        json_list = JSON.stringify(obj);
-        fs.writeFile(
-          __dirname + "/../animelist.json",
-          json_list,
-          "utf8",
-          (err) => {
-            if (err) {
-              message.channel.send("Une erreur est survenue");
-              throw err;
-            } else {
-              message.channel.send(
-                `:ballot_box_with_check: Anime ${tmp.name} ${tmp.type} supprimé !`
-              );
-            }
-          }
+  fs.readFile(__dirname + "/../animelist.json", "utf8", (err, res) => {
+    if (err) {
+      if (err.code === "ENOENT") {
+        message.channel.send(
+          "Aucune anime list n'a encore été créée, impossible de supprimer."
         );
-      });
-    } else {
-      message.channel.send(
-        "Aucune anime list n'a encore été créée, impossible de supprimer."
-      );
+        return;
+      } else {
+        message.channel.send("Une erreur est survenue");
+        throw err;
+      }
     }
+    let obj = JSON.parse(res);
+    // if its a numeric
+    if (!isNaN(index)) {
+      let numeric = parseInt(index);
+      if (numeric < Object.keys(obj).length) {
+        index = Object.keys(obj)[index];
+      } else {
+        message.channel.send("L'index fournit n'est pas dans l'anime liste");
+        return;
+      }
+    }
+    if (!obj[index]) {
+      message.channel.send(
+        "L'index fournit ne correspond à aucune entrée dans l'anime liste"
+      );
+      return;
+    }
+    let tmp = obj[index];
+    delete obj[index];
+    json_list = JSON.stringify(obj);
+    fs.writeFile(__dirname + "/../animelist.json", json_list, "utf8", (err) => {
+      if (err) {
+        message.channel.send("Une erreur est survenue");
+        throw err;
+      } else {
+        message.channel.send(
+          `:ballot_box_with_check: Anime ${tmp.name} ${tmp.type} supprimé !`
+        );
+      }
+    });
   });
 };
 
@@ -961,6 +960,22 @@ module.exports.updateAnimes = function (client, message, YT_KEY) {
       `Fin de la mise à jour des animes, ${total} animes on été mis à jour !`
     );
   });
+};
+
+module.exports.testValidity = async function (message) {
+  message.content = message.content
+    .substring(prefix.testValidity.length)
+    .trim();
+  if (message.content.length > 0) {
+    let videoValid = await isVideoValid(message.content);
+    if (!videoValid) {
+      message.channel.send("Vidéo invalide :no_entry_sign:");
+    } else {
+      message.channel.send("Vidéo valide :woman_gesturing_ok:");
+    }
+  } else {
+    message.channel.send(`Arguments invalides, ${prefix.testValidity} <link>`);
+  }
 };
 /**
  *
