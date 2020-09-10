@@ -10,10 +10,10 @@ const Discord = require("discord.js"); // Require the Discord.js library.
 const Ffmpeg = require("fluent-ffmpeg");
 
 const prefix = {
-  add: ">btadd ",
-  play: ">btplay ",
-  replace: ">btreplace ",
-  remove: ">btremove ",
+  add: ">btadd",
+  play: ">btplay",
+  replace: ">btreplace",
+  remove: ">btremove",
   count: ">btcount",
   clear: ">btclear",
   update: ">btupdate",
@@ -957,7 +957,7 @@ module.exports.updateAnimes = function (client, message, YT_KEY) {
       }
     }
     message.channel.send(
-      `Fin de la mise à jour des animes, ${total} animes on été mis à jour !`
+      `Fin de la mise à jour des animes, ${total} animes ont été mis à jour !`
     );
   });
 };
