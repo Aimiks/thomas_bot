@@ -125,26 +125,10 @@ client.on("message", (message) => {
         case commands.blindTest.prefix.testValidity:
           commands.blindTest.testValidity(message);
           break;
-        case ">test":
+        case commands.blindTest.prefix.testUnicity:
           /** TEST COMMANDS */
           /** TEST X */
-          commands.blindTest.util.unserializeAnimeList((animes) => {
-            commands.blindTest.util
-              .getUniqueAnimeList(animes)
-              .then((string) => {
-                if (string.length > 2000) {
-                  for (let i = 0; i < string.length / 2000; i++) {
-                    message.channel.send(
-                      string.substring(i * 2000, (i + 1) * 2000)
-                    );
-                  }
-                } else {
-                  message.channel.send(string);
-                }
-              });
-            message.channel.send("En cours de test...");
-          });
-
+          commands.blindTest.util.getUniqueAnimeList(message);
           break;
         case commands.blindTest.prefix.update:
           commands.blindTest.updateAnimes(client, message, YT_KEY);

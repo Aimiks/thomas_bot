@@ -17,7 +17,8 @@ const prefix = {
   count: ">btcount",
   clear: ">btclear",
   update: ">btupdate",
-  testValidity: ">bttest",
+  testValidity: ">btvalid",
+  testUnicity: ">bttest",
 };
 module.exports.prefix = prefix;
 
@@ -30,6 +31,7 @@ const helpCommandsObj = {
   clear: `\`\`\`Markdown\n# Supprime les entrées dont la vidéo n'est plus disponible.\n${prefix.clear}\`\`\``,
   update: `\`\`\`Markdown\n# Met à jour les animes qui ne sont plus valides.\n${prefix.update}\`\`\``,
   testValidity: `\`\`\`Markdown\n# Test la validité du lien.\n${prefix.testValidity} <lien>\`\`\``,
+  testUnicity: `\`\`\`Markdown\n# Test l'unicité de la liste (que la liste ne contienne pas des doublons).\n${prefix.testUnicity}\`\`\``,
 };
 
 /**
@@ -107,6 +109,26 @@ let unserializeAnimeList = function (callback) {
     callback(animes);
   });
 };
+/**
+ * Same as unserializeAnimeList but async
+ * @param {*} callback
+ */
+let unserializeAnimeListAsync = function () {
+  return new Promise((resolve, reject) => {
+    try {
+      let animes = [];
+      let objs = JSON.parse(
+        fs.readFileSync(__dirname + "/../animelist.json", "utf8")
+      );
+      Object.values(objs).forEach(({ name, type, link }) => {
+        animes.push(new Anime(name, type, link));
+      });
+      resolve(animes);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
 
 let getMeanVolume = function (stream) {
   return new Promise((resolve, reject) => {
@@ -136,31 +158,42 @@ let getMeanVolume = function (stream) {
       .saveToFile("./");
   });
 };
-let getUniqueAnimeList = (animes) => {
-  return Promise.resolve().then(() => {
-    let copy_indx = [];
-    let strings_to_return = "----Test unicité----";
-    Object.values(animes).forEach((anime, i) => {
-      Object.values(animes).forEach((other, ind) => {
-        if (anime !== other && copy_indx.findIndex((e) => e === i) === -1) {
-          console.log(
-            `[${i}] Testing ${anime.name} ${anime.type} with [${ind}] ${other.name} ${other.type}...`
-          );
-          if (
-            ((anime.name.split(" ").length &&
-              other.name.split(" ").length &&
-              anime.name.split(" ")[0] === other.name.split(" ")[0]) ||
-              IAAdapt(new PrepAnimeCombi(anime, null), other.name)) &&
-            anime.type === other.type
-          ) {
-            copy_indx.push(ind);
-            strings_to_return += `\n[${ind}] __${other.name} ${other.type}__ semble être une copie de [${i}] __${anime.name} ${anime.type}__`;
-          }
+/**
+ * Test unicity of the list
+ * @param {*} message
+ */
+let getUniqueAnimeList = async function (message) {
+  const { Worker } = require("worker_threads");
+  function _useWorker(filepath) {
+    return new Promise((resolve, reject) => {
+      const worker = new Worker(filepath);
+      worker.on("online", () => {
+        message.channel.send(":abacus: En cours de test...");
+      });
+      worker.on("message", (messageFromWorker) => {
+        resolve(messageFromWorker);
+        return;
+      });
+      worker.on("error", reject);
+      worker.on("exit", (code) => {
+        if (code !== 0) {
+          reject(new Error(`Worker stopped with exit code ${code}`));
         }
       });
     });
-    return strings_to_return;
+  }
+  let results;
+  try {
+    results = await _useWorker(__dirname + "/../workers/unicityTest.js");
+  } catch (err) {
+    message.channel.send("Erreur durant le test :(");
+    console.error(err);
+    return;
+  }
+  results.forEach((m) => {
+    message.channel.send(m);
   });
+  message.channel.send(":clipboard: Fin du test !");
 };
 /**
  *
@@ -197,12 +230,53 @@ let isVideoValid = async function (anime) {
   return isValid;
 };
 
+/**
+ *
+ * @param {PrepAnimeCombi} prep
+ * @param {string} anwser
+ */
+function IAAdapt(prep, anwser) {
+  let combinaisons = prep.combinaisons;
+
+  for (let i = 0; i < combinaisons.length; i++) {
+    let newRightAnwser = combinaisons[i].replace(" ", "");
+    let newAnwser = anwser.replace(" ", "");
+
+    newRightAnwser = newRightAnwser.replace(/[^a-z]/gim, "");
+    newAnwser = newAnwser.replace(/[^a-z]/gim, "");
+
+    let coherence = stringSimilarity.compareTwoStrings(
+      newAnwser,
+      newRightAnwser
+    );
+    if (combinaisons[i].length <= 6) {
+      if (newRightAnwser === newAnwser) {
+        return true;
+      }
+    } else if (combinaisons[i].length > 6 && combinaisons[i].length <= 12) {
+      if (coherence > 0.8) {
+        return true;
+      }
+    } else if (combinaisons[i].length > 12 && combinaisons[i].length <= 20) {
+      if (coherence > 0.7) {
+        return true;
+      }
+    } else if (combinaisons[i].length > 20) {
+      if (coherence > 0.55) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
 exports.util = {
   unserializeAnimeList,
+  unserializeAnimeListAsync,
   addToJsonFile,
   getMeanVolume,
   getUniqueAnimeList,
   isVideoValid,
+  IAAdapt,
 };
 
 /**
@@ -520,9 +594,15 @@ function startNewRound(Game, client) {
           `:robot: Vidéo supprimé ou plus disponible. Skip du round. Anime: __${currAnime.name} [${currAnime.type}]__ :robot:`
         );
       });
+      if (Game.curRound + 1 != Game.noRounds) {
+        Game.curRound++;
+        startNewRound(Game, client);
+      } else {
+        Game.reset();
+        sendEndBoardResult(Game, client);
+      }
       return;
     }
-    console.log(`Current anime : ${currAnime.name} [${currAnime.type}`);
     Game.getAllPlayersUser().forEach((e) => {
       e.send(
         `:new: La manche n°**${Game.curRound + 1}**${
@@ -561,7 +641,6 @@ function startNewRound(Game, client) {
       filter: "audioonly",
     });
     stream.on("error", (err) => {
-      console.error(`[startNewRound] stream error`, err);
       Game.getAllPlayersUser().forEach((e) => {
         e.send(
           `:robot: Vidéo supprimé ou plus disponible. Skip du round. Anime: __${currAnime.name} [${currAnime.type}]__ :robot:`
@@ -977,46 +1056,6 @@ module.exports.testValidity = async function (message) {
     message.channel.send(`Arguments invalides, ${prefix.testValidity} <link>`);
   }
 };
-/**
- *
- * @param {PrepAnimeCombi} prep
- * @param {string} anwser
- */
-function IAAdapt(prep, anwser) {
-  let combinaisons = prep.combinaisons;
-
-  for (let i = 0; i < combinaisons.length; i++) {
-    let newRightAnwser = combinaisons[i].replace(" ", "");
-    let newAnwser = anwser.replace(" ", "");
-
-    newRightAnwser = newRightAnwser.replace(/[^a-z]/gim, "");
-    newAnwser = newAnwser.replace(/[^a-z]/gim, "");
-
-    let coherence = stringSimilarity.compareTwoStrings(
-      newAnwser,
-      newRightAnwser
-    );
-
-    if (combinaisons[i].length <= 6) {
-      if (newRightAnwser === newAnwser) {
-        return true;
-      }
-    } else if (combinaisons[i].length > 6 && combinaisons[i].length <= 12) {
-      if (coherence > 0.8) {
-        return true;
-      }
-    } else if (combinaisons[i].length > 12 && combinaisons[i].length <= 20) {
-      if (coherence > 0.7) {
-        return true;
-      }
-    } else if (combinaisons[i].length > 20) {
-      if (coherence > 0.55) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
 
 /**
  *
