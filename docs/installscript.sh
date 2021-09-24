@@ -22,15 +22,6 @@ sudo apt install git
 #ffmpeg
 sudo apt install ffmpeg
 
-#bot discord
-mkdir discordBot
-
-cd ./discordBot
-
-git clone https://github.com/Aimiks/thomas_bot.git
-
-cd ./thomas_bot
-
 yarn install
 
 echo module.exports = {  >> sensitive_infos.js
