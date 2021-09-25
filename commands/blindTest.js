@@ -52,15 +52,10 @@ let addToJsonFile = function (animes, callback = null) {
     if (err) {
       if (err.code === "ENOENT") {
         /* write file */
-        fs.writeFile(
-          __dirname + "/../animelist.json",
-          json_list,
-          "utf8",
-          (err) => {
-            if (err) throw err;
-            if (callback) callback({ already_have, size: animes.length });
-          }
-        );
+        fs.writeFile(__dirname + "/../animelist.json", json_list, "utf8", (err) => {
+          if (err) throw err;
+          if (callback) callback({ already_have, size: animes.length });
+        });
         return;
       }
       throw err;
@@ -117,9 +112,7 @@ let unserializeAnimeListAsync = function () {
   return new Promise((resolve, reject) => {
     try {
       let animes = [];
-      let objs = JSON.parse(
-        fs.readFileSync(__dirname + "/../animelist.json", "utf8")
-      );
+      let objs = JSON.parse(fs.readFileSync(__dirname + "/../animelist.json", "utf8"));
       Object.values(objs).forEach(({ name, type, link }) => {
         animes.push(new Anime(name, type, link));
       });
@@ -149,9 +142,7 @@ let getMeanVolume = function (stream) {
           console.log(stderr);
         }
         return match && match[0]
-          ? resolve(
-              parseFloat(match[0].substring("mean_volume:".length).trim())
-            )
+          ? resolve(parseFloat(match[0].substring("mean_volume:".length).trim()))
           : reject("failed");
       })
 
@@ -245,10 +236,7 @@ function IAAdapt(prep, anwser) {
     newRightAnwser = newRightAnwser.replace(/[^a-z]/gim, "");
     newAnwser = newAnwser.replace(/[^a-z]/gim, "");
 
-    let coherence = stringSimilarity.compareTwoStrings(
-      newAnwser,
-      newRightAnwser
-    );
+    let coherence = stringSimilarity.compareTwoStrings(newAnwser, newRightAnwser);
     if (combinaisons[i].length <= 6) {
       if (newRightAnwser === newAnwser) {
         return true;
@@ -347,9 +335,7 @@ module.exports.add = (client, message, YTKEY) => {
       res = res.map((r) => r.results[0]);
       let animes = [];
       res.forEach((r, ind) => {
-        animes.push(
-          new Anime(names[ind].toLowerCase(), types[ind].toLowerCase(), r.link)
-        );
+        animes.push(new Anime(names[ind].toLowerCase(), types[ind].toLowerCase(), r.link));
       });
 
       //callback for the addToJsonFile
@@ -358,9 +344,7 @@ module.exports.add = (client, message, YTKEY) => {
         let embed = [new Discord.RichEmbed(opt)];
         let state_msg = "";
         if (already_have.length > 0) {
-          res = res.filter(
-            (a, ind) => !already_have.includes(names[ind] + " " + types[ind])
-          );
+          res = res.filter((a, ind) => !already_have.includes(names[ind] + " " + types[ind]));
 
           warning = `\n:warning: Certains animes n'ont pas été ajoutés car ils existent déjà dans la liste : ${already_have.join(
             ", "
@@ -370,14 +354,9 @@ module.exports.add = (client, message, YTKEY) => {
           if (embed.length - 1 < Math.floor(ind / 24)) {
             embed.push(new Discord.RichEmbed(opt));
           }
-          embed[Math.floor(ind / 24)].addField(
-            `${args[ind]}`,
-            `[${r.title}](${r.link})`
-          );
+          embed[Math.floor(ind / 24)].addField(`${args[ind]}`, `[${r.title}](${r.link})`);
         });
-        embed[embed.length - 1].setFooter(
-          "Nombres d'animes dans la liste : " + size
-        );
+        embed[embed.length - 1].setFooter("Nombres d'animes dans la liste : " + size);
         if (res.length === 0) {
           state_msg = ":x: Aucun animes n'a été ajoutés.";
         } else {
@@ -392,9 +371,7 @@ module.exports.add = (client, message, YTKEY) => {
       addToJsonFile(animes, callback);
     })
     .catch((err) => {
-      message.channel.send(
-        `:x: Erreur durant l'ajout des animes. L'ajout a été annulé.`
-      );
+      message.channel.send(`:x: Erreur durant l'ajout des animes. L'ajout a été annulé.`);
       console.log(err);
     });
 };
@@ -407,9 +384,7 @@ module.exports.replaceLink = (message) => {
   message.content = message.content.substring(prefix.replace.length);
   let args = message.content.split(",");
   if (args.length < 2) {
-    message.channel.send(
-      `Nombres d'arguments invalides.\nEx : ${prefix.replace}mirai nikki op1, lien_youtube`
-    );
+    message.channel.send(`Nombres d'arguments invalides.\nEx : ${prefix.replace}mirai nikki op1, lien_youtube`);
     return;
   }
   let index = args[0].trim();
@@ -418,9 +393,7 @@ module.exports.replaceLink = (message) => {
   fs.readFile(__dirname + "/../animelist.json", "utf8", (err, res) => {
     if (err) {
       if (err.code === "ENOENT") {
-        message.channel.send(
-          "Aucune anime list n'a encore été créée, impossible de remplacer."
-        );
+        message.channel.send("Aucune anime list n'a encore été créée, impossible de remplacer.");
         return;
       } else {
         message.channel.send("Une erreur est survenue");
@@ -449,9 +422,7 @@ module.exports.replaceLink = (message) => {
         message.channel.send("Une erreur est survenue");
         throw err;
       } else {
-        message.channel.send(
-          `:ballot_box_with_check: Lien de l'anime ${index} remplacé par ${replacement} !`
-        );
+        message.channel.send(`:ballot_box_with_check: Lien de l'anime ${index} remplacé par ${replacement} !`);
       }
     });
   });
@@ -463,18 +434,14 @@ module.exports.replaceLink = (message) => {
 module.exports.remove = (message) => {
   message.content = message.content.substring(prefix.remove.length);
   if (message.content === "") {
-    message.channel.send(
-      `Nombres d'arguments invalides.\nEx : ${prefix.remove}mirai nikki op1`
-    );
+    message.channel.send(`Nombres d'arguments invalides.\nEx : ${prefix.remove}mirai nikki op1`);
     return;
   }
   let index = message.content.trim();
   fs.readFile(__dirname + "/../animelist.json", "utf8", (err, res) => {
     if (err) {
       if (err.code === "ENOENT") {
-        message.channel.send(
-          "Aucune anime list n'a encore été créée, impossible de supprimer."
-        );
+        message.channel.send("Aucune anime list n'a encore été créée, impossible de supprimer.");
         return;
       } else {
         message.channel.send("Une erreur est survenue");
@@ -493,9 +460,7 @@ module.exports.remove = (message) => {
       }
     }
     if (!obj[index]) {
-      message.channel.send(
-        "L'index fournit ne correspond à aucune entrée dans l'anime liste"
-      );
+      message.channel.send("L'index fournit ne correspond à aucune entrée dans l'anime liste");
       return;
     }
     let tmp = obj[index];
@@ -506,9 +471,7 @@ module.exports.remove = (message) => {
         message.channel.send("Une erreur est survenue");
         throw err;
       } else {
-        message.channel.send(
-          `:ballot_box_with_check: Anime ${tmp.name} ${tmp.type} supprimé !`
-        );
+        message.channel.send(`:ballot_box_with_check: Anime ${tmp.name} ${tmp.type} supprimé !`);
       }
     });
   });
@@ -543,9 +506,7 @@ module.exports.play = (message, Game, client) => {
             }
             let member = mem[index];
             Game.addPlayer(member.user);
-            member.send(
-              ":crab: Salut mon pote, prêt à jouer ? :crab: (oui/non) (yes/no)"
-            );
+            member.send(":crab: Salut mon pote, prêt à jouer ? :crab: (oui/non) (yes/no)");
             setTimeout(() => {
               let currP = Game.players.find((p) => p.ID === member.id);
               if (currP && !currP.isReady) {
@@ -566,9 +527,7 @@ module.exports.play = (message, Game, client) => {
           }
         });
       } catch (error) {
-        message.channel.send(
-          ":no_entry: Vous devez être dans un channel vocal"
-        );
+        message.channel.send(":no_entry: Vous devez être dans un channel vocal");
       }
     });
   } else {
@@ -671,9 +630,7 @@ function startNewRound(Game, client) {
         let default_volume = 1;
         let gain = Math.pow(2, (db - 20) / 6);
         let volume = default_volume * gain;
-        console.log(
-          "Volume music : " + volume + " [" + gain.toFixed(1) + "] | db : " + db
-        );
+        console.log("Volume music : " + volume + " [" + gain.toFixed(1) + "] | db : " + db);
         let streamOptions = { seek: 0, volume, bitrate: 30000 };
         //console.log(stream);
         //console.log(Game.listReadableStreamSongs);
@@ -702,10 +659,7 @@ module.exports.privateMessage = (message, Game, client) => {
     return;
   }
   if (
-    !(
-      Game.getAllPlayersUser().includes(message.author) &&
-      Game.playersIdAcceptedAnswers.includes(message.author.id)
-    )
+    !(Game.getAllPlayersUser().includes(message.author) && Game.playersIdAcceptedAnswers.includes(message.author.id))
   ) {
     return;
   }
@@ -741,8 +695,7 @@ module.exports.privateMessage = (message, Game, client) => {
   }
   if (
     Game.getPlayerSelectModeState(message.author.id) ||
-    (message.content.length >= 3 &&
-      message.content.replace(/[^a-z]/, "").length !== 0)
+    (message.content.length >= 3 && message.content.replace(/[^a-z]/, "").length !== 0)
   ) {
     let replied_number = -1;
     message.content = message.content.trim();
@@ -755,9 +708,7 @@ module.exports.privateMessage = (message, Game, client) => {
         ///formule : ( 1/t*12 ) * 5pts
         let res = IAAdapt(Game.listSongs[Game.curRound], message.content);
         if (res) {
-          console.log(
-            `${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`
-          );
+          console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
           console.log(
             `\x1b[33m${message.author.username}\x1b[0m a trouvé \x1b[33m${
               Game.listSongs[Game.curRound].anime.name
@@ -767,9 +718,7 @@ module.exports.privateMessage = (message, Game, client) => {
             Game.firstToFindCash = false;
             Game.getAllPlayersUser().forEach((e) => {
               e.send(
-                `:dollar: __${
-                  message.author.username
-                }__ a trouvé la réponse en premier en **${Game.timerValue.toFixed(
+                `:dollar: __${message.author.username}__ a trouvé la réponse en premier en **${Game.timerValue.toFixed(
                   1
                 )}s** dans le mode réponse ouverte ! :dollar:`
               );
@@ -785,9 +734,7 @@ module.exports.privateMessage = (message, Game, client) => {
           );
           message.author.send(`:tada: Tu as trouvé la bonne réponse ! :tada:`);
         } else {
-          message.author.send(
-            `:woman_gesturing_no: Mauvaise réponse... :woman_gesturing_no:`
-          );
+          message.author.send(`:woman_gesturing_no: Mauvaise réponse... :woman_gesturing_no:`);
         }
         break;
       case 2:
@@ -795,9 +742,7 @@ module.exports.privateMessage = (message, Game, client) => {
         ///formule : (1/t*8) * 3 pts
         if (replied_number === Game.carreSol) {
           Game.timerValue = Game.timerValue < 0.5 ? 0.5 : Game.timerValue;
-          console.log(
-            `${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`
-          );
+          console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
           let sc = (1 / Game.timerValue) * 8 * 3;
           Game.playerAddScore(message.author.id, sc);
           Game.updatePlayerBestScore(
@@ -820,9 +765,7 @@ module.exports.privateMessage = (message, Game, client) => {
           }
           message.author.send(`:tada: Tu as trouvé la bonne réponse ! :tada:`);
         } else {
-          message.author.send(
-            `:woman_gesturing_no: Mauvaise réponse... :woman_gesturing_no:`
-          );
+          message.author.send(`:woman_gesturing_no: Mauvaise réponse... :woman_gesturing_no:`);
         }
         break;
       case 3:
@@ -830,9 +773,7 @@ module.exports.privateMessage = (message, Game, client) => {
         ///Formule : 1/t*2+1
         if (replied_number === Game.duoSol) {
           Game.timerValue = Game.timerValue < 0.5 ? 0.5 : Game.timerValue;
-          console.log(
-            `${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`
-          );
+          console.log(`${message.author.username} a trouvé la réponse en ${Game.timerValue} secondes !`);
           let sc = (1 / Game.timerValue) * 2 + 1;
           Game.playerAddScore(message.author.id, sc);
           Game.updatePlayerBestScore(
@@ -856,36 +797,23 @@ module.exports.privateMessage = (message, Game, client) => {
           }
           message.author.send(`:tada: Tu as trouvé la bonne réponse ! :tada:`);
         } else {
-          message.author.send(
-            `:woman_gesturing_no: Mauvaise réponse... :woman_gesturing_no:`
-          );
+          message.author.send(`:woman_gesturing_no: Mauvaise réponse... :woman_gesturing_no:`);
         }
         break;
     }
     Game.removeIdFromAcceptedAnswers(message.author.id);
     console.log("Timer value : " + Game.timerValue);
-    console.log(
-      `${message.author.username} a ${Game.getPlayerScore(
-        message.author.id
-      )} points de score`
-    );
+    console.log(`${message.author.username} a ${Game.getPlayerScore(message.author.id)} points de score`);
     let curr_anime = Game.listSongs[Game.curRound].anime;
     let opts_embed = {
       title: `:o: La bonne réponse était`,
       color: client.resolver.resolveColor("RANDOM"),
     };
     let embed_answer = new Discord.RichEmbed(opts_embed);
-    embed_answer.addField(
-      ":label: Nom de l'anime",
-      `[${toTitleCase(curr_anime.name)}](${curr_anime.link})`
-    );
+    embed_answer.addField(":label: Nom de l'anime", `[${toTitleCase(curr_anime.name)}](${curr_anime.link})`);
     embed_answer.addField(":musical_note: Type de la musique", curr_anime.type);
 
-    embed_answer.setThumbnail(
-      `http://i3.ytimg.com/vi/${new URL(curr_anime.link).searchParams.get(
-        "v"
-      )}/0.jpg`
-    );
+    embed_answer.setThumbnail(`http://i3.ytimg.com/vi/${new URL(curr_anime.link).searchParams.get("v")}/0.jpg`);
     message.author.send(embed_answer);
 
     if (Game.playersHaveResponded) {
@@ -898,9 +826,7 @@ module.exports.privateMessage = (message, Game, client) => {
         startNewRound(Game, client);
       }
     } else {
-      message.author.send(
-        ":hourglass_flowing_sand: En attente des autres joueurs.... "
-      );
+      message.author.send(":hourglass_flowing_sand: En attente des autres joueurs.... ");
     }
   } else {
     switch (message.content) {
@@ -925,12 +851,7 @@ module.exports.privateMessage = (message, Game, client) => {
         break;
       case "3":
         let temptab2 = Game.getDuo();
-        message.author.send(
-          ":one: " +
-            toTitleCase(temptab2[0]) +
-            "\n:two: " +
-            toTitleCase(temptab2[1])
-        );
+        message.author.send(":one: " + toTitleCase(temptab2[0]) + "\n:two: " + toTitleCase(temptab2[1]));
         Game.setPlayerSelectMode(message.author.id, 3);
         break;
       default:
@@ -962,9 +883,7 @@ module.exports.countList = (channel) => {
     let popular = animes
       .slice()
       .sort(
-        (a, b) =>
-          animes.filter((an) => an.name === a.name).length -
-          animes.filter((an) => an.name === b.name).length
+        (a, b) => animes.filter((an) => an.name === a.name).length - animes.filter((an) => an.name === b.name).length
       )
       .pop();
     let pop_nb = animes.filter((a) => a.name === popular.name).length;
@@ -1013,9 +932,7 @@ module.exports.clearInvalids = function (message) {
         total++;
       }
     }
-    message.channel.send(
-      `Fin de la suppression des animes invalides ! ${total} animes supprimés !`
-    );
+    message.channel.send(`Fin de la suppression des animes invalides ! ${total} animes supprimés !`);
   });
 };
 
@@ -1030,21 +947,19 @@ module.exports.updateAnimes = function (client, message, YT_KEY) {
         const { name, type } = anime;
         message.content = `>btremove ${name} ${type}`;
         module.exports.remove(message);
+        await new Promise((r) => setTimeout(r, 100));
         message.content = `>btadd ${name} ${type}`;
+        await new Promise((r) => setTimeout(r, 100));
         module.exports.add(client, message, YT_KEY);
         total++;
       }
     }
-    message.channel.send(
-      `Fin de la mise à jour des animes, ${total} animes ont été mis à jour !`
-    );
+    message.channel.send(`Fin de la mise à jour des animes, ${total} animes ont été mis à jour !`);
   });
 };
 
 module.exports.testValidity = async function (message) {
-  message.content = message.content
-    .substring(prefix.testValidity.length)
-    .trim();
+  message.content = message.content.substring(prefix.testValidity.length).trim();
   if (message.content.length > 0) {
     let videoValid = await isVideoValid(message.content);
     if (!videoValid) {
@@ -1099,29 +1014,23 @@ function sendEndBoardResult(Game, client) {
     `:trophy: **${nameWinner}** :trophy:`,
     `**Score** : __${scoreWinner.toFixed(
       2
-    )}__ :small_orange_diamond:\n**Meilleur score** : __${finalBoard[0].bestScore.toFixed(
-      2
-    )}__ sur __${finalBoard[0].bestSong}__ trouvé en ${
-      finalBoard[0].time
-    } secondes`
+    )}__ :small_orange_diamond:\n**Meilleur score** : __${finalBoard[0].bestScore.toFixed(2)}__ sur __${
+      finalBoard[0].bestSong
+    }__ trouvé en ${finalBoard[0].time} secondes`
   );
   for (let index = 1; index < finalBoard.length && index < 24; index++) {
     let stats = "";
     if (index < 6) {
-      stats = `\n**Meilleur score** : __${finalBoard[index].bestScore.toFixed(
-        2
-      )}__ sur __${finalBoard[index].bestSong}__ trouvé en ${
-        finalBoard[index].time
-      } secondes`;
+      stats = `\n**Meilleur score** : __${finalBoard[index].bestScore.toFixed(2)}__ sur __${
+        finalBoard[index].bestSong
+      }__ trouvé en ${finalBoard[index].time} secondes`;
     }
     if (index === 23) {
       final_embed_message.addField("...", "...");
     } else if (index < 23) {
       final_embed_message.addField(
         `${emojis[index]} ${finalBoard[index].username}`,
-        `Score : __${finalBoard[index].score.toFixed(
-          2
-        )}__ :small_orange_diamond:${stats}`,
+        `Score : __${finalBoard[index].score.toFixed(2)}__ :small_orange_diamond:${stats}`,
         true
       );
     }
